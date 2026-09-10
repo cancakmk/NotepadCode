@@ -1,0 +1,685 @@
+/* ==========================================================================
+   Notepad Code - Theme-Adaptive Minimalist Design System
+   Adapts seamlessly to any VS Code theme (Dark, Light, High Contrast, Custom)
+   ========================================================================== */
+
+:root {
+  --bg-primary: var(--vscode-editor-background, #1e1e1e);
+  --bg-secondary: var(--vscode-sideBar-background, #181818);
+  --bg-hover: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.14)));
+  --bg-active: var(--vscode-list-activeSelectionBackground, rgba(128, 128, 128, 0.2));
+  --border-color: var(--vscode-sideBar-border, var(--vscode-panel-border, rgba(128, 128, 128, 0.2)));
+  --border-light: var(--vscode-widget-border, rgba(128, 128, 128, 0.35));
+  --text-primary: var(--vscode-foreground, var(--vscode-editor-foreground, #cccccc));
+  --text-secondary: var(--vscode-descriptionForeground, rgba(160, 160, 160, 0.8));
+  --text-muted: var(--vscode-disabledForeground, rgba(140, 140, 140, 0.6));
+  --icon-color: var(--vscode-icon-foreground, var(--vscode-foreground, currentColor));
+  --focus-border: var(--vscode-focusBorder, #007acc);
+  
+  --badge-bg: var(--vscode-badge-background, rgba(128, 128, 128, 0.25));
+  --badge-fg: var(--vscode-badge-foreground, var(--text-primary));
+
+  --font-editorial: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--vscode-editor-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.vscode-light {
+  --text-primary: var(--vscode-foreground, #1e1e1e);
+  --text-secondary: var(--vscode-descriptionForeground, #616161);
+  --text-muted: var(--vscode-disabledForeground, #8a8a8a);
+  --icon-color: var(--vscode-icon-foreground, #424242);
+  --bg-hover: var(--vscode-toolbar-hoverBackground, rgba(0, 0, 0, 0.07));
+}
+
+body.vscode-dark {
+  --text-primary: var(--vscode-foreground, #cccccc);
+  --text-secondary: var(--vscode-descriptionForeground, #999999);
+  --text-muted: var(--vscode-disabledForeground, #666666);
+  --icon-color: var(--vscode-icon-foreground, #c5c5c5);
+  --bg-hover: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.08));
+}
+
+body.vscode-high-contrast {
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
+  --text-muted: #ffffff;
+  --icon-color: #ffffff;
+  --border-color: #ffffff;
+  --bg-hover: #000000;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: var(--font-editorial);
+  font-size: 13px;
+  line-height: 1.5;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   SIDEBAR EXPLORER VIEW
+   ========================================================================== */
+
+#sidebar-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-secondary);
+}
+
+.sidebar-header {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.brand-icon {
+  display: inline-flex;
+  color: var(--text-primary);
+}
+
+.brand-badge {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  background-color: var(--badge-bg);
+  color: var(--badge-fg);
+  font-family: var(--font-editorial);
+  letter-spacing: 0.04em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Minimalist Icon Buttons */
+.btn-icon {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--icon-color);
+  cursor: pointer;
+  padding: 4px 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+
+.btn-icon:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: transparent;
+}
+
+.btn-icon:active {
+  background-color: var(--bg-active);
+}
+
+/* Minimalist Toolbar Action Row */
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-minimal {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+  flex: 1;
+  justify-content: center;
+}
+
+.btn-minimal:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-light);
+}
+
+.btn-minimal:active {
+  background-color: var(--bg-active);
+}
+
+/* Search Box */
+.search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 28px 6px 28px;
+  background-color: var(--vscode-input-background, var(--bg-primary));
+  color: var(--vscode-input-foreground, var(--text-primary));
+  border: 1px solid var(--vscode-input-border, var(--border-color));
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--font-editorial);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.search-input:focus {
+  border-color: var(--focus-border);
+}
+
+.search-icon-pos {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  display: inline-flex;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  display: none;
+}
+
+.search-clear-btn:hover {
+  color: var(--text-primary);
+}
+
+/* Explorer Tree Content */
+.explorer-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 6px;
+}
+
+/* Notebook Accordion Group */
+.notebook-group {
+  margin-bottom: 4px;
+}
+
+.notebook-group.active {
+  border: none;
+}
+
+.notebook-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  gap: 6px;
+}
+
+.notebook-header-row:hover {
+  background-color: var(--bg-hover);
+}
+
+.notebook-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.chevron-icon {
+  display: inline-flex;
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+}
+
+.notebook-group.collapsed .chevron-icon {
+  transform: rotate(-90deg);
+}
+
+.notebook-icon {
+  display: inline-flex;
+  color: var(--text-secondary);
+}
+
+.notebook-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notebook-badge-count {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 0 4px;
+  border-radius: 10px;
+  background-color: var(--badge-bg);
+}
+
+.notebook-hover-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.notebook-header-row:hover .notebook-hover-actions {
+  opacity: 1;
+}
+
+/* Pages Under Notebook */
+.pages-list {
+  display: flex;
+  flex-direction: column;
+  padding-left: 14px;
+  margin-top: 2px;
+  gap: 1px;
+}
+
+.notebook-group.collapsed .pages-list {
+  display: none;
+}
+
+.page-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  gap: 6px;
+  border-left: 2px solid transparent;
+}
+
+.page-row:hover {
+  background-color: var(--bg-hover);
+}
+
+.page-row.selected {
+  background-color: var(--vscode-list-activeSelectionBackground, rgba(255, 255, 255, 0.12));
+  color: var(--vscode-list-activeSelectionForeground, #ffffff);
+  border-left-color: var(--vscode-focusBorder, var(--text-primary));
+}
+
+.page-row.selected .page-title,
+.page-row.selected .page-time,
+.page-row.selected .page-icon,
+.page-row.selected .grip-handle,
+.page-row.selected .btn-icon {
+  color: var(--vscode-list-activeSelectionForeground, #ffffff) !important;
+}
+
+.page-row.selected .btn-icon:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+  color: var(--vscode-list-activeSelectionForeground, #ffffff) !important;
+}
+
+.page-row.dragging,
+.notebook-group.dragging {
+  opacity: 0.35;
+}
+
+.page-row.drag-over-top,
+.notebook-group.drag-over-top {
+  border-top: 2px solid var(--vscode-focusBorder, var(--text-primary)) !important;
+}
+
+.page-row.drag-over-bottom,
+.notebook-group.drag-over-bottom {
+  border-bottom: 2px solid var(--vscode-focusBorder, var(--text-primary)) !important;
+}
+
+.grip-handle {
+  display: inline-flex;
+  color: var(--text-muted);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  margin-right: 2px;
+}
+
+.page-row:hover .grip-handle,
+.notebook-header-row:hover .grip-handle {
+  opacity: 0.7;
+}
+
+.grip-handle:hover {
+  opacity: 1;
+}
+
+.page-row-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.page-icon {
+  display: inline-flex;
+  color: var(--text-muted);
+}
+
+.page-title {
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.page-hover-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.page-row:hover .page-hover-actions,
+.page-row.selected .page-hover-actions {
+  opacity: 1;
+}
+
+/* Empty State */
+.empty-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.empty-placeholder-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.empty-placeholder-desc {
+  font-size: 11.5px;
+  line-height: 1.5;
+  max-width: 240px;
+}
+
+/* ==========================================================================
+   FULL EDITOR TAB VIEW (Distraction-Free Direct Note Taking)
+   ========================================================================== */
+
+#editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.editor-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 28px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  gap: 12px;
+}
+
+.editor-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.notebook-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background-color: var(--badge-bg);
+  color: var(--badge-fg);
+  font-weight: 500;
+  font-size: 11.5px;
+}
+
+.editor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.save-circle {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  transition: background-color var(--transition-fast);
+}
+
+.save-circle.saved {
+  background-color: var(--vscode-editorGutter-addedBackground, #4ec9b0);
+}
+
+/* Note Canvas Area */
+.note-canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 36px 40px 36px;
+  overflow-y: auto;
+  user-select: text;
+}
+
+.note-title-input {
+  font-family: var(--font-editorial);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+  transition: border-color var(--transition-fast);
+}
+
+.note-title-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.note-title-input:focus {
+  border-bottom-color: var(--focus-border);
+}
+
+.note-body-textarea {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  font-family: var(--font-editorial);
+  font-size: 15px;
+  line-height: 1.75;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  user-select: text;
+}
+
+.note-body-textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Note Status Footer */
+.note-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 28px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Minimalist Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  width: 100%;
+  max-width: 340px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-card-input {
+  width: 100%;
+  padding: 8px 10px;
+  background-color: var(--vscode-input-background, var(--bg-secondary));
+  color: var(--vscode-input-foreground, var(--text-primary));
+  border: 1px solid var(--vscode-input-border, var(--border-color));
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  outline: none;
+}
+
+.modal-card-input:focus {
+  border-color: var(--focus-border);
+}
+
+.modal-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
+}

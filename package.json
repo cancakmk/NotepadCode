@@ -1,0 +1,318 @@
+{
+  "name": "notepad-code",
+  "displayName": "Notepad Code",
+  "description": "Minimalist black & white notebook and page organizer for VS Code, accessible across all workspaces.",
+  "version": "0.1.0",
+  "publisher": "notepad-code",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Notebooks",
+    "Other"
+  ],
+  "keywords": [
+    "notes",
+    "notepad",
+    "notebook",
+    "markdown",
+    "organizer",
+    "monochrome",
+    "clean"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "notepad-code-container",
+          "title": "Notepad Code",
+          "icon": "media/notepad-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "notepad-code-container": [
+        {
+          "type": "webview",
+          "id": "notepadCode.sidebarView",
+          "name": "Notepad Code",
+          "icon": "media/notepad-icon.svg",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "notepadCode.openEditor",
+        "title": "Notepad Code: Open Full Editor",
+        "category": "Notepad Code"
+      },
+      {
+        "command": "notepadCode.exportNotes",
+        "title": "Notepad Code: Export Notes (JSON)",
+        "icon": "$(export)",
+        "category": "Notepad Code"
+      },
+      {
+        "command": "notepadCode.importNotes",
+        "title": "Notepad Code: Import Notes (JSON)",
+        "icon": "$(cloud-download)",
+        "category": "Notepad Code"
+      },
+      {
+        "command": "notepadCode.createNotebook",
+        "title": "Notepad Code: New Notebook",
+        "icon": "$(new-folder)",
+        "category": "Notepad Code"
+      },
+      {
+        "command": "notepadCode.createPage",
+        "title": "Notepad Code: New Page",
+        "icon": "$(file-plus)",
+        "category": "Notepad Code"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "notepadCode.createNotebook",
+          "when": "view == notepadCode.sidebarView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "notepadCode.exportNotes",
+          "when": "view == notepadCode.sidebarView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "notepadCode.importNotes",
+          "when": "view == notepadCode.sidebarView",
+          "group": "navigation@3"
+        }
+      ]
+    },
+    "chatParticipants": [
+      {
+        "id": "notepad-code.participant",
+        "name": "notepad",
+        "description": "Notlarınızı ve defterlerinizi yönetir, arama yapar ve düzenler.",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "list",
+            "description": "Tüm defter ve sayfaları listeler"
+          },
+          {
+            "name": "search",
+            "description": "Notlar içinde arama yapar"
+          }
+        ]
+      }
+    ],
+    "languageModelTools": [
+      {
+        "name": "notepad_list_notebooks",
+        "displayName": "Notepad: List Notebooks",
+        "modelDescription": "Lists all user notebooks and pages in Notepad Code with IDs, titles, and summaries.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "notepad_read_page",
+        "displayName": "Notepad: Read Note Page",
+        "modelDescription": "Reads the title, full content, and word/character counts of a specific note page in Notepad Code.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "notebookId": {
+              "type": "string",
+              "description": "ID of the notebook containing the page."
+            },
+            "pageId": {
+              "type": "string",
+              "description": "ID of the page to read."
+            }
+          },
+          "required": ["notebookId", "pageId"]
+        }
+      },
+      {
+        "name": "notepad_search_notes",
+        "displayName": "Notepad: Search Notes",
+        "modelDescription": "Searches for notes matching a text query across all notebooks and pages in Notepad Code.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search keyword or text query."
+            }
+          },
+          "required": ["query"]
+        }
+      },
+      {
+        "name": "notepad_create_notebook",
+        "displayName": "Notepad: Create Notebook",
+        "modelDescription": "Creates a new notebook in Notepad Code.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "The title of the new notebook."
+            },
+            "description": {
+              "type": "string",
+              "description": "Optional description for the notebook."
+            }
+          },
+          "required": ["title"]
+        }
+      },
+      {
+        "name": "notepad_create_page",
+        "displayName": "Notepad: Create Note Page",
+        "modelDescription": "Creates a new note page with a title and content in NORMAL PLAIN TEXT format (NOT markdown syntax like #, ##, **, ```).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "notebookId": {
+              "type": "string",
+              "description": "ID of the notebook to create the page in."
+            },
+            "title": {
+              "type": "string",
+              "description": "The title of the note page (plain text)."
+            },
+            "content": {
+              "type": "string",
+              "description": "Content of the note in NORMAL PLAIN TEXT format (do not use markdown formatting like #, **, ```)."
+            }
+          },
+          "required": ["notebookId", "title"]
+        }
+      },
+      {
+        "name": "notepad_update_page",
+        "displayName": "Notepad: Update Note Page",
+        "modelDescription": "Updates the title and/or content of an existing note page in NORMAL PLAIN TEXT format (NOT markdown).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "notebookId": {
+              "type": "string",
+              "description": "ID of the notebook containing the page."
+            },
+            "pageId": {
+              "type": "string",
+              "description": "ID of the page to update."
+            },
+            "title": {
+              "type": "string",
+              "description": "New title for the note (optional, plain text)."
+            },
+            "content": {
+              "type": "string",
+              "description": "New content for the note in NORMAL PLAIN TEXT format (optional, no markdown)."
+            }
+          },
+          "required": ["notebookId", "pageId"]
+        }
+      },
+      {
+        "name": "notepad_rename_notebook",
+        "displayName": "Notepad: Rename Notebook",
+        "modelDescription": "Renames an existing notebook in Notepad Code.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "notebookId": {
+              "type": "string",
+              "description": "ID of the notebook to rename."
+            },
+            "title": {
+              "type": "string",
+              "description": "New title for the notebook."
+            }
+          },
+          "required": ["notebookId", "title"]
+        }
+      },
+      {
+        "name": "notepad_delete_page",
+        "displayName": "Notepad: Delete Note Page",
+        "modelDescription": "Deletes a specific note page from a notebook in Notepad Code. Prompts user for confirmation to prevent accidental data loss.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "notebookId": {
+              "type": "string",
+              "description": "ID of the notebook containing the page."
+            },
+            "pageId": {
+              "type": "string",
+              "description": "ID of the page to delete."
+            }
+          },
+          "required": ["notebookId", "pageId"]
+        }
+      },
+      {
+        "name": "notepad_delete_notebook",
+        "displayName": "Notepad: Delete Notebook",
+        "modelDescription": "Deletes an entire notebook and all its pages from Notepad Code. Prompts user for confirmation to prevent accidental data loss.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "notebookId": {
+              "type": "string",
+              "description": "ID of the notebook to delete."
+            }
+          },
+          "required": ["notebookId"]
+        }
+      },
+      {
+        "name": "notepad_export_notes",
+        "displayName": "Notepad: Export Notes",
+        "modelDescription": "Exports all notebooks and notes from Notepad Code as a JSON string backup.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "notepad_import_notes",
+        "displayName": "Notepad: Import Notes",
+        "modelDescription": "Imports notebooks and notes from a JSON string into Notepad Code. Prompts user for confirmation to prevent accidental data overwrite.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "jsonData": {
+              "type": "string",
+              "description": "The JSON backup string to import."
+            }
+          },
+          "required": ["jsonData"]
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "typecheck": "tsc --noEmit",
+    "mcp:setup": "node mcp/auto-config.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3"
+  }
+}
