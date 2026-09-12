@@ -32,15 +32,15 @@ function loadStorageData() {
       {
         id: 'nb-default',
         title: 'Notepad Code',
-        description: 'Genel Notlar',
+        description: 'General Notes',
         createdAt: Date.now(),
         updatedAt: Date.now(),
         pages: [
           {
             id: 'page-default',
             notebookId: 'nb-default',
-            title: 'Başlangıç Notu',
-            content: 'Notepad Code eklentisi hem VS Code, hem Cursor hem de Antigravity ile entegre çalışır.',
+            title: 'Getting Started',
+            content: 'Notepad Code integrates seamlessly across VS Code, Cursor, and Google Antigravity.',
             isPinned: false,
             createdAt: Date.now(),
             updatedAt: Date.now()
@@ -412,7 +412,7 @@ function executeTool(name, args) {
       if (!page) return `Error: Page "${args.pageId}" not found.`;
 
       if (!args.confirm) {
-        return `⚠️ ONAY GEREKİYOR (CONFIRMATION REQUIRED): "${nb.title}" defterindeki "${page.title}" başlıklı not kalıcı olarak silinecektir. Lütfen kullanıcıdan onay alıp 'confirm: true' parametresi ile tekrar çağırın.`;
+        return `⚠️ CONFIRMATION REQUIRED: Note "${page.title}" in notebook "${nb.title}" will be permanently deleted. Please obtain user confirmation and call again with 'confirm: true'.`;
       }
 
       nb.pages = nb.pages.filter((p) => p.id !== args.pageId);
@@ -427,7 +427,7 @@ function executeTool(name, args) {
 
       if (!args.confirm) {
         const pageCount = (nb.pages || []).length;
-        return `⚠️ ONAY GEREKİYOR (CONFIRMATION REQUIRED): "${nb.title}" defteri ve içindeki ${pageCount} adet sayfa kalıcı olarak silinecektir. Lütfen kullanıcıdan onay alıp 'confirm: true' parametresi ile tekrar çağırın.`;
+        return `⚠️ CONFIRMATION REQUIRED: Notebook "${nb.title}" and all its ${pageCount} pages will be permanently deleted. Please obtain user confirmation and call again with 'confirm: true'.`;
       }
 
       data.notebooks = data.notebooks.filter((n) => n.id !== args.notebookId);
@@ -441,7 +441,7 @@ function executeTool(name, args) {
 
     case 'notepad_import_notes': {
       if (!args.confirm) {
-        return `⚠️ ONAY GEREKİYOR (CONFIRMATION REQUIRED): İçe aktarma işlemi mevcut notların üzerine yazacaktır. Lütfen kullanıcıdan onay alıp 'confirm: true' parametresi ile tekrar çağırın.`;
+        return `⚠️ CONFIRMATION REQUIRED: Importing notes will overwrite existing notes. Please obtain user confirmation and call again with 'confirm: true'.`;
       }
 
       try {

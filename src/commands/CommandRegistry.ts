@@ -50,23 +50,23 @@ export class CommandRegistry {
 
   private async _newNotebook(): Promise<void> {
     const title = await vscode.window.showInputBox({
-      prompt: 'Yeni Not Defteri Başlığı / New Notebook Title',
-      placeHolder: 'örn: Proje Mimarisi, Fikirler, Python İpuçları...',
-      validateInput: (text) => (!text.trim() ? 'Başlık boş olamaz' : null),
+      prompt: 'New Notebook Title',
+      placeHolder: 'e.g.: Architecture Decisions, Ideas, Python Snippets...',
+      validateInput: (text) => (!text.trim() ? 'Title cannot be empty' : null),
     });
 
     if (!title) return;
 
     await this._notebookService.createNotebook(title.trim());
     await this._provider.syncData();
-    vscode.window.showInformationMessage(`"${title}" defteri oluşturuldu.`);
+    vscode.window.showInformationMessage(`Notebook "${title}" created.`);
   }
 
   private async _newPage(): Promise<void> {
     const notebooks = await this._notebookService.getAllNotebooks();
     if (notebooks.length === 0) {
-      const createFirst = await vscode.window.showQuickPick(['Yeni Defter Oluştur'], {
-        placeHolder: 'Önce bir defter oluşturmanız gerekiyor',
+      const createFirst = await vscode.window.showQuickPick(['Create New Notebook'], {
+        placeHolder: 'You need to create a notebook first',
       });
       if (createFirst) {
         await this._newNotebook();
@@ -77,18 +77,18 @@ export class CommandRegistry {
     const selectedNb = await vscode.window.showQuickPick(
       notebooks.map((nb) => ({
         label: `📓 ${nb.title}`,
-        description: `${nb.pageCount} sayfa`,
+        description: `${nb.pageCount} ${nb.pageCount === 1 ? 'page' : 'pages'}`,
         notebook: nb,
       })),
-      { placeHolder: 'Sayfanın ekleneceği defteri seçin' }
+      { placeHolder: 'Select the notebook to add the page to' }
     );
 
     if (!selectedNb) return;
 
     const pageTitle = await vscode.window.showInputBox({
-      prompt: `"${selectedNb.notebook.title}" içine yeni sayfa başlığı:`,
-      placeHolder: 'örn: Toplantı Notları, TODO listesi...',
-      validateInput: (text) => (!text.trim() ? 'Sayfa başlığı boş olamaz' : null),
+      prompt: `New page title in "${selectedNb.notebook.title}":`,
+      placeHolder: 'e.g.: Meeting Notes, TODO list...',
+      validateInput: (text) => (!text.trim() ? 'Page title cannot be empty' : null),
     });
 
     if (!pageTitle) return;
@@ -104,7 +104,7 @@ export class CommandRegistry {
       page.id,
       () => this._provider.syncData()
     );
-    vscode.window.showInformationMessage(`"${pageTitle}" sayfası oluşturuldu.`);
+    vscode.window.showInformationMessage(`Page "${pageTitle}" created.`);
   }
 
   private async _exportNotes(): Promise<void> {

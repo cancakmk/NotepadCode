@@ -1,34 +1,34 @@
 ---
 name: notepad-code
-description: Notepad Code not defterlerini ve sayfalarını yönetmek, aramak, okumak, eklemek ve silmek için kullanılır.
+description: Used to manage, search, read, create, update, and delete Notepad Code notebooks and pages.
 ---
 
 # Notepad Code Skill
 
-Bu skill, kullanıcının Notepad Code eklentisindeki not defterlerini (Notebooks) ve not sayfalarını (Pages) yönetmenizi sağlar.
+This skill allows you to manage notebooks and note pages inside the Notepad Code extension.
 
-## Kullanılabilir MCP Araçları
+## Available MCP Tools
 
-1. `notepad_list_notebooks`: Tüm defter ve sayfa başlıklarını listeler.
-2. `notepad_read_page`: Belirtilen sayfanın tam içeriğini okur (`notebookId`, `pageId`).
-3. `notepad_search_notes`: Notlar arasında metin araması yapar (`query`).
-4. `notepad_create_notebook`: Yeni defter oluşturur (`title`, `description`).
-5. `notepad_create_page`: Deftere yeni sayfa ekler (`notebookId`, `title`, `content`).
-6. `notepad_update_page`: Sayfa başlığını veya içeriğini günceller (`notebookId`, `pageId`, `title`, `content`).
-7. `notepad_rename_notebook`: Defter adını değiştirir (`notebookId`, `title`).
-8. `notepad_delete_page`: Sayfayı kalıcı olarak siler (`notebookId`, `pageId`, `confirm: true`).
-9. `notepad_delete_notebook`: Defteri ve altındaki tüm sayfaları kalıcı olarak siler (`notebookId`, `confirm: true`).
-10. `notepad_export_notes`: Tüm notları JSON yedeği olarak alır.
-11. `notepad_import_notes`: JSON yedeğini yükler (`jsonData`, `confirm: true`).
+1. `notepad_list_notebooks`: Lists all notebook and page titles and IDs.
+2. `notepad_read_page`: Reads the full content of a specific page (`notebookId`, `pageId`).
+3. `notepad_search_notes`: Performs full-text search across all notes (`query`).
+4. `notepad_create_notebook`: Creates a new notebook (`title`, `description`).
+5. `notepad_create_page`: Adds a new page to a notebook (`notebookId`, `title`, `content`).
+6. `notepad_update_page`: Updates page title or content (`notebookId`, `pageId`, `title`, `content`).
+7. `notepad_rename_notebook`: Renames an existing notebook (`notebookId`, `title`).
+8. `notepad_delete_page`: Permanently deletes a note page (`notebookId`, `pageId`, `confirm: true`).
+9. `notepad_delete_notebook`: Permanently deletes a notebook and all its pages (`notebookId`, `confirm: true`).
+10. `notepad_export_notes`: Exports all notes as a JSON backup string.
+11. `notepad_import_notes`: Restores or imports notes from JSON (`jsonData`, `confirm: true`).
 
-## ⚠️ Güvenlik ve Veri Kaybını Önleme Kuralı
+## ⚠️ Safety & Data Loss Prevention Rules
 
-`notepad_delete_page`, `notepad_delete_notebook` ve `notepad_import_notes` araçları kalıcı veri kaybı riski taşır.
-- Bu araçları çağırmadan önce kullanıcıdan açık onay almadan `confirm: true` parametresi ASLA gönderilmemelidir.
-- Kullanıcıya tam olarak hangi defter veya sayfanın silineceği açıkça belirtilmeli, onay alındıktan sonra işlem tamamlanmalıdır.
+The tools `notepad_delete_page`, `notepad_delete_notebook`, and `notepad_import_notes` carry permanent data loss risks.
+- NEVER pass `confirm: true` without obtaining explicit user confirmation first.
+- Clearly inform the user which specific notebook or page will be deleted before proceeding.
 
-## 📝 Format Kuralı (Normal / Düz Metin Formatı)
+## 📝 Plain-Text Formatting Rule
 
-Notepad Code'da tüm notlar **normal düz metin (plain text)** formatında tutulur.
-- Sayfa içeriği oluştururken veya güncellerken Markdown sözdizimi (`#`, `##`, `**kalın**`, ` ``` ` vb.) **KULLANMAYIN**.
-- Başlıkları veya maddeleri düz, doğal ve okunabilir metin satırları olarak yazın. 
+All notes in Notepad Code are stored in **normal plain text** format.
+- DO NOT use Markdown formatting syntax (`#`, `##`, `**bold**`, ` ``` `, etc.) when creating or updating page content.
+- Format headings, lists, and sections using clean, natural plain text lines.

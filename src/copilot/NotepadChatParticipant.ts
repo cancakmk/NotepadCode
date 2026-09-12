@@ -24,14 +24,14 @@ export function registerNotepadChatParticipant(
     if (request.command === 'list') {
       const notebooks = await notebookService.getAllNotebooks();
       if (notebooks.length === 0) {
-        stream.markdown('Henüz oluşturulmuş bir not defteri bulunmuyor. Yeni bir defter oluşturmak için `@notepad Yeni Defterim adında defter oluştur` yazabilirsiniz.\n');
+        stream.markdown('No notebooks found yet. You can create a new notebook by asking `@notepad create a notebook named My Notes`.\n');
         return;
       }
 
-      stream.markdown('### 📓 Not Defterleriniz\n\n');
+      stream.markdown('### 📓 Your Notebooks\n\n');
       for (const nb of notebooks) {
         const pages = nb.getPages();
-        stream.markdown(`- **${nb.title}** *(${pages.length} sayfa)*\n`);
+        stream.markdown(`- **${nb.title}** *(${pages.length} ${pages.length === 1 ? 'page' : 'pages'})*\n`);
         for (const p of pages) {
           stream.markdown(`  - 📄 ${p.title} *(ID: \`${p.id}\`)*\n`);
         }
@@ -42,17 +42,17 @@ export function registerNotepadChatParticipant(
     // Slash command: /search
     if (request.command === 'search') {
       if (!prompt) {
-        stream.markdown('Lütfen aramak istediğiniz kelimeyi girin. Örnek: `@notepad /search react`\n');
+        stream.markdown('Please enter a keyword to search for. Example: `@notepad /search react`\n');
         return;
       }
 
       const results = await notebookService.search(prompt);
       if (results.length === 0) {
-        stream.markdown(`**"${prompt}"** aramasıyla eşleşen herhangi bir not bulunamadı.\n`);
+        stream.markdown(`No notes found matching **"${prompt}"**.\n`);
         return;
       }
 
-      stream.markdown(`### 🔍 Arama Sonuçları: "${prompt}" (${results.length} eşleşme)\n\n`);
+      stream.markdown(`### 🔍 Search Results: "${prompt}" (${results.length} ${results.length === 1 ? 'match' : 'matches'})\n\n`);
       for (const r of results) {
         stream.markdown(`- **${r.notebookTitle}** ➔ **${r.pageTitle}**\n  > ${r.matchedSnippet}\n\n`);
       }
@@ -70,7 +70,7 @@ export function registerNotepadChatParticipant(
       const activeModel = model || (await vscode.lm.selectChatModels())[0];
 
       if (!activeModel) {
-        stream.markdown('VS Code Copilot modeli bulunamadı. Lütfen GitHub Copilot eklentinizin aktif olduğundan emin olun.\n');
+        stream.markdown('VS Code Copilot model not found. Please ensure GitHub Copilot is enabled and active.\n');
         return;
       }
 
@@ -98,7 +98,7 @@ ${JSON.stringify(summaryContext, null, 2)}`;
         stream.markdown(fragment);
       }
     } catch (err: any) {
-      stream.markdown(`İşlem sırasında bir hata oluştu: ${err.message}\n`);
+      stream.markdown(`An error occurred: ${err.message}\n`);
     }
   };
 

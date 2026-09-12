@@ -25,12 +25,12 @@ export function getEditorHtml(
   }
 
   return /* html */ `<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; font-src ${webview.cspSource};">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Not Düzenleyici</title>
+  <title>Note Editor</title>
   <style>
     ${cssContent}
   </style>
@@ -41,24 +41,24 @@ export function getEditorHtml(
     <header class="editor-header-bar">
       <div style="flex: 1;"></div>
       <div class="editor-header-actions">
-        <div class="save-badge" title="Değişiklikler anında otomatik kaydedilir">
+        <div class="save-badge" title="Changes saved automatically">
           <div id="save-circle" class="save-circle saved"></div>
-          <span id="save-text">Kaydedildi</span>
+          <span id="save-text">Saved</span>
         </div>
-        <button id="btn-copy" class="btn-icon" title="Tüm Notu Panoya Kopyala">${Icons.copy}</button>
-        <button id="btn-delete" class="btn-icon" title="Bu Notu Sil">${Icons.trash}</button>
+        <button id="btn-copy" class="btn-icon" title="Copy Full Note to Clipboard">${Icons.copy}</button>
+        <button id="btn-delete" class="btn-icon" title="Delete Note">${Icons.trash}</button>
       </div>
     </header>
 
     <!-- Main Note Canvas -->
     <main class="note-canvas">
-      <input type="text" id="note-title" class="note-title-input" placeholder="Başlıksız Not" title="Sayfa Başlığı" spellcheck="false" autocomplete="off" />
-      <textarea id="note-body" class="note-body-textarea" placeholder="Buraya doğrudan notlarınızı yazın..." title="Not İçeriği" spellcheck="false"></textarea>
+      <input type="text" id="note-title" class="note-title-input" placeholder="Untitled Note" title="Note Title" spellcheck="false" autocomplete="off" />
+      <textarea id="note-body" class="note-body-textarea" placeholder="Type your notes directly here..." title="Note Content" spellcheck="false"></textarea>
     </main>
 
     <!-- Footer Stats -->
     <footer class="note-footer-bar">
-      <span id="note-stats" title="Kelime ve Karakter Sayısı">0 kelime · 0 karakter</span>
+      <span id="note-stats" title="Word and Character Count">0 words · 0 characters</span>
     </footer>
   </div>
 
@@ -116,10 +116,10 @@ export function getEditorHtml(
           const fullText = (title ? title + '\\n\\n' : '') + body;
           navigator.clipboard.writeText(fullText).then(() => {
             elements.btnCopy.innerHTML = icons.check;
-            elements.btnCopy.title = 'Panoya Kopyalandı!';
+            elements.btnCopy.title = 'Copied to Clipboard!';
             setTimeout(() => {
               elements.btnCopy.innerHTML = icons.copy;
-              elements.btnCopy.title = 'Tüm Notu Panoya Kopyala';
+              elements.btnCopy.title = 'Copy Full Note to Clipboard';
             }, 1500);
           });
         });
@@ -166,7 +166,7 @@ export function getEditorHtml(
 
       function onContentChange() {
         elements.saveCircle.classList.remove('saved');
-        elements.saveText.innerText = 'Kaydediliyor...';
+        elements.saveText.innerText = 'Saving...';
         updateStats();
 
         if (state.saveTimeout) {
@@ -181,7 +181,7 @@ export function getEditorHtml(
       function savePage() {
         if (!state.activeNotebookId || !state.activePageId) return;
 
-        const title = elements.noteTitle.value.trim() || 'Başlıksız Not';
+        const title = elements.noteTitle.value.trim() || 'Untitled Note';
         const content = elements.noteBody.value;
 
         vscode.postMessage({
@@ -193,7 +193,7 @@ export function getEditorHtml(
         });
 
         elements.saveCircle.classList.add('saved');
-        elements.saveText.innerText = 'Kaydedildi';
+        elements.saveText.innerText = 'Saved';
 
         const page = getCurrentPage();
         if (page) {
@@ -207,7 +207,7 @@ export function getEditorHtml(
         const text = elements.noteBody.value || '';
         const words = text.trim() ? text.trim().split(/\\s+/).filter(Boolean).length : 0;
         const chars = text.length;
-        elements.noteStats.innerText = \`\${words} kelime · \${chars} karakter\`;
+        elements.noteStats.innerText = \`\${words} words · \${chars} characters\`;
       }
 
       init();

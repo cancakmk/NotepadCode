@@ -42,7 +42,7 @@ export class NotepadEditorPanel {
 
     const panel = vscode.window.createWebviewPanel(
       NotepadEditorPanel.viewType,
-      'Notepad Code - Not Düzenleyici',
+      'Notepad Code - Note Editor',
       column || vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -128,7 +128,7 @@ export class NotepadEditorPanel {
     if (nb) {
       const page = nb.findPage(pageId);
       if (page) {
-        this._panel.title = page.title || 'Başlıksız Not';
+        this._panel.title = page.title || 'Untitled Note';
       }
     }
   }
@@ -164,13 +164,13 @@ export class NotepadEditorPanel {
         case 'deletePage': {
           const nb = await this._notebookService.getNotebook(message.notebookId);
           const page = nb?.findPage(message.pageId);
-          const title = page ? page.title : 'Bu sayfayı';
+          const title = page ? page.title : 'this page';
           const confirmed = await vscode.window.showWarningMessage(
-            `"${title}" sayfasını silmek istediğinize emin misiniz?`,
+            `Are you sure you want to delete page "${title}"?`,
             { modal: true },
-            'Sayfayı Sil'
+            'Delete Page'
           );
-          if (confirmed === 'Sayfayı Sil') {
+          if (confirmed === 'Delete Page') {
             await this._notebookService.deletePage(message.notebookId, message.pageId);
             this._notifyUpdate();
             this.dispose();

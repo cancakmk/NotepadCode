@@ -34,7 +34,7 @@ export class NotebookService {
 
     const notebook = Notebook.create(trimmedTitle, description);
     // Create an initial empty page for convenience
-    const initialPage = Page.create(notebook.id, 'Genel / General', '');
+    const initialPage = Page.create(notebook.id, 'General', '');
     notebook.addPage(initialPage);
 
     await this._repository.saveNotebook(notebook);
@@ -66,7 +66,7 @@ export class NotebookService {
       throw new Error(`Notebook not found: ${notebookId}`);
     }
 
-    const page = Page.create(notebookId, title || 'Yeni Sayfa', content);
+    const page = Page.create(notebookId, title || 'Untitled Page', content);
     notebook.addPage(page);
     await this._repository.saveNotebook(notebook);
     return page;

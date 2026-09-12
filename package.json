@@ -101,16 +101,16 @@
       {
         "id": "notepad-code.participant",
         "name": "notepad",
-        "description": "Notlarınızı ve defterlerinizi yönetir, arama yapar ve düzenler.",
+        "description": "Manage, search, and organize your notebooks and notes.",
         "isSticky": true,
         "commands": [
           {
             "name": "list",
-            "description": "Tüm defter ve sayfaları listeler"
+            "description": "List all notebooks and pages"
           },
           {
             "name": "search",
-            "description": "Notlar içinde arama yapar"
+            "description": "Search inside notes"
           }
         ]
       }

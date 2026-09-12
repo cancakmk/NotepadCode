@@ -96,13 +96,13 @@ export class NotepadWebviewProvider implements vscode.WebviewViewProvider {
 
         case 'deleteNotebook': {
           const nb = await this._notebookService.getNotebook(message.id);
-          const title = nb ? nb.title : 'Bu defteri';
+          const title = nb ? nb.title : 'this notebook';
           const confirmed = await vscode.window.showWarningMessage(
-            `"${title}" defterini ve içindeki tüm sayfaları silmek istediğinize emin misiniz?`,
+            `Are you sure you want to delete notebook "${title}" and all its pages?`,
             { modal: true },
-            'Defteri Sil'
+            'Delete Notebook'
           );
-          if (confirmed === 'Defteri Sil') {
+          if (confirmed === 'Delete Notebook') {
             await this._notebookService.deleteNotebook(message.id);
             await this.syncData();
             this._syncEditorPanel();
@@ -145,13 +145,13 @@ export class NotepadWebviewProvider implements vscode.WebviewViewProvider {
         case 'deletePage': {
           const nb = await this._notebookService.getNotebook(message.notebookId);
           const pageItem = nb?.findPage(message.pageId);
-          const title = pageItem ? pageItem.title : 'Bu sayfayı';
+          const title = pageItem ? pageItem.title : 'this page';
           const confirmed = await vscode.window.showWarningMessage(
-            `"${title}" sayfasını silmek istediğinize emin misiniz?`,
+            `Are you sure you want to delete page "${title}"?`,
             { modal: true },
-            'Sayfayı Sil'
+            'Delete Page'
           );
-          if (confirmed === 'Sayfayı Sil') {
+          if (confirmed === 'Delete Page') {
             await this._notebookService.deletePage(message.notebookId, message.pageId);
             await this.syncData();
             this._syncEditorPanel();

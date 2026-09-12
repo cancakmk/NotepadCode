@@ -25,7 +25,7 @@ export function getSidebarHtml(
   }
 
   return /* html */ `<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; font-src ${webview.cspSource};">
@@ -41,8 +41,8 @@ export function getSidebarHtml(
       <!-- Quick Search Box -->
       <div class="search-wrapper">
         <span class="search-icon-pos">${Icons.search}</span>
-        <input type="text" id="search-input" class="search-input" placeholder="Notlarda ara..." spellcheck="false" autocomplete="off" />
-        <button id="search-clear" class="search-clear-btn" title="Aramayı Temizle">${Icons.close}</button>
+        <input type="text" id="search-input" class="search-input" placeholder="Search notes..." spellcheck="false" autocomplete="off" />
+        <button id="search-clear" class="search-clear-btn" title="Clear Search">${Icons.close}</button>
       </div>
     </header>
 
@@ -52,11 +52,11 @@ export function getSidebarHtml(
     <!-- Minimalist Modal Dialog -->
     <div id="modal-overlay" class="modal-overlay">
       <div class="modal-card">
-        <div id="modal-title" class="modal-card-title">Defter</div>
-        <input type="text" id="modal-input" class="modal-card-input" placeholder="İsim giriniz..." />
+        <div id="modal-title" class="modal-card-title">Notebook</div>
+        <input type="text" id="modal-input" class="modal-card-input" placeholder="Enter name..." />
         <div class="modal-card-actions">
-          <button id="modal-cancel-btn" class="btn-minimal" title="İptal Et" style="flex: 0 0 auto; padding: 4px 12px;">İptal</button>
-          <button id="modal-submit-btn" class="btn-minimal" title="Onayla" style="flex: 0 0 auto; padding: 4px 14px; font-weight: 600;">Kaydet</button>
+          <button id="modal-cancel-btn" class="btn-minimal" title="Cancel" style="flex: 0 0 auto; padding: 4px 12px;">Cancel</button>
+          <button id="modal-submit-btn" class="btn-minimal" title="Save" style="flex: 0 0 auto; padding: 4px 14px; font-weight: 600;">Save</button>
         </div>
       </div>
     </div>
@@ -138,7 +138,7 @@ export function getSidebarHtml(
 
         if (elements.btnNewNotebook) {
           elements.btnNewNotebook.addEventListener('click', () => {
-            showModal('Yeni Defter Oluştur', 'Defter adı...', '', (name) => {
+            showModal('Create New Notebook', 'Notebook name...', '', (name) => {
               vscode.postMessage({ type: 'createNotebook', title: name });
             });
           });
@@ -172,8 +172,8 @@ export function getSidebarHtml(
           elements.explorerContent.innerHTML = \`
             <div class="empty-placeholder">
               <div style="opacity: 0.35;">\${icons.book}</div>
-              <div class="empty-placeholder-title">Henüz Defter Yok</div>
-              <div class="empty-placeholder-desc">Notlarınızı düzenlemeye başlamak için sağ üstteki defter ekleme butonuna tıklayın.</div>
+              <div class="empty-placeholder-title">No Notebooks Yet</div>
+              <div class="empty-placeholder-desc">Click the notebook icon above to create your first notebook.</div>
             </div>
           \`;
           return;
@@ -206,16 +206,16 @@ export function getSidebarHtml(
           headerEl.draggable = !query; // Only allow drag when not filtering
           headerEl.innerHTML = \`
             <div class="notebook-header-left">
-              <span class="grip-handle" title="Defteri sürükleyip sıralayın">\${icons.grip}</span>
+              <span class="grip-handle" title="Drag to reorder notebook">\${icons.grip}</span>
               <span class="chevron-icon">\${icons.chevronDown}</span>
               <span class="notebook-icon">\${icons.book}</span>
               <span class="notebook-name" title="\${escapeHtml(nb.title)}">\${escapeHtml(nb.title)}</span>
-              <span class="notebook-badge-count" title="\${pages.length} sayfa">\${pages.length}</span>
+              <span class="notebook-badge-count" title="\${pages.length} \${pages.length === 1 ? 'page' : 'pages'}">\${pages.length}</span>
             </div>
             <div class="notebook-hover-actions">
-              <button class="btn-icon btn-rename-nb" title="Defter Adını Değiştir">\${icons.edit}</button>
-              <button class="btn-icon btn-add-page" title="Bu Deftere Sayfa Ekle">\${icons.plus}</button>
-              <button class="btn-icon btn-del-nb" title="Defteri Sil">\${icons.trash}</button>
+              <button class="btn-icon btn-rename-nb" title="Rename Notebook">\${icons.edit}</button>
+              <button class="btn-icon btn-add-page" title="Add Page to Notebook">\${icons.plus}</button>
+              <button class="btn-icon btn-del-nb" title="Delete Notebook">\${icons.trash}</button>
             </div>
           \`;
 
@@ -291,7 +291,7 @@ export function getSidebarHtml(
           // Rename notebook
           headerEl.querySelector('.btn-rename-nb').addEventListener('click', (e) => {
             e.stopPropagation();
-            showModal('Defter Adını Değiştir', 'Yeni defter adı...', nb.title, (newTitle) => {
+            showModal('Rename Notebook', 'New notebook name...', nb.title, (newTitle) => {
               vscode.postMessage({
                 type: 'updateNotebook',
                 id: nb.id,
@@ -304,7 +304,7 @@ export function getSidebarHtml(
           headerEl.querySelector('.btn-add-page').addEventListener('click', (e) => {
             e.stopPropagation();
             state.activeNotebookId = nb.id;
-            showModal(\`"\${nb.title}" içine Yeni Sayfa\`, 'Sayfa adı...', '', (title) => {
+            showModal(\`New Page in "\${nb.title}"\`, 'Page title...', '', (title) => {
               vscode.postMessage({ type: 'createPage', notebookId: nb.id, title });
             });
           });
@@ -322,7 +322,7 @@ export function getSidebarHtml(
           pagesListEl.className = 'pages-list';
 
           if (pages.length === 0) {
-            pagesListEl.innerHTML = \`<div style="padding: 4px 8px; font-size: 11px; color: var(--text-muted); font-style: italic;">Sayfa yok</div>\`;
+            pagesListEl.innerHTML = \`<div style="padding: 4px 8px; font-size: 11px; color: var(--text-muted); font-style: italic;">No pages</div>\`;
           } else {
             pages.forEach((page, pageIndex) => {
               const isSelected = state.activePageId === page.id;
@@ -331,17 +331,17 @@ export function getSidebarHtml(
               pageEl.draggable = !query; // Allow dragging when not in search
               pageEl.dataset.pageId = page.id;
               pageEl.dataset.notebookId = nb.id;
-              pageEl.title = 'Açmak için tıklayın, sıralamak için sürükleyin';
+              pageEl.title = 'Click to open, drag to reorder';
 
               pageEl.innerHTML = \`
                 <div class="page-row-left">
-                  <span class="grip-handle" title="Sürükleyip sıralayın">\${icons.grip}</span>
+                  <span class="grip-handle" title="Drag to reorder">\${icons.grip}</span>
                   <span class="page-icon">\${icons.fileText}</span>
-                  <span class="page-title">\${escapeHtml(page.title || 'Başlıksız')}</span>
+                  <span class="page-title">\${escapeHtml(page.title || 'Untitled')}</span>
                 </div>
                 <div class="page-time">\${formatTime(page.updatedAt)}</div>
                 <div class="page-hover-actions">
-                  <button class="btn-icon btn-del-page" title="Sayfayı Sil">\${icons.trash}</button>
+                  <button class="btn-icon btn-del-page" title="Delete Page">\${icons.trash}</button>
                 </div>
               \`;
 
@@ -472,9 +472,9 @@ export function getSidebarHtml(
       function formatTime(ts) {
         if (!ts) return '';
         const diff = Math.floor((Date.now() - ts) / 1000);
-        if (diff < 60) return 'şimdi';
-        if (diff < 3600) return \`\${Math.floor(diff / 60)}d\`;
-        if (diff < 86400) return \`\${Math.floor(diff / 3600)}s\`;
+        if (diff < 60) return 'now';
+        if (diff < 3600) return \`\${Math.floor(diff / 60)}m\`;
+        if (diff < 86400) return \`\${Math.floor(diff / 3600)}h\`;
         const d = new Date(ts);
         return \`\${d.getDate()}.\${d.getMonth() + 1}\`;
       }

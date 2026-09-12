@@ -302,11 +302,11 @@ export class NotepadDeletePageTool implements vscode.LanguageModelTool<IDeletePa
     const nbTitle = notebook ? notebook.title : notebookId;
 
     return {
-      invocationMessage: `"${pageTitle}" notu siliniyor...`,
+      invocationMessage: `Deleting note "${pageTitle}"...`,
       confirmationMessages: {
-        title: 'Notu Sil (Delete Page)',
+        title: 'Delete Note Page',
         message: new vscode.MarkdownString(
-          `**"${nbTitle}"** defterindeki **"${pageTitle}"** başlıklı not kalıcı olarak silinecektir.\n\nDevam etmek istiyor musunuz?`
+          `Note **"${pageTitle}"** in notebook **"${nbTitle}"** will be permanently deleted.\n\nDo you want to continue?`
         ),
       },
     };
@@ -351,11 +351,11 @@ export class NotepadDeleteNotebookTool implements vscode.LanguageModelTool<IDele
     const count = notebook ? notebook.pageCount : 0;
 
     return {
-      invocationMessage: `"${nbTitle}" defteri siliniyor...`,
+      invocationMessage: `Deleting notebook "${nbTitle}"...`,
       confirmationMessages: {
-        title: 'Not Defterini Sil (Delete Notebook)',
+        title: 'Delete Notebook',
         message: new vscode.MarkdownString(
-          `⚠️ **"${nbTitle}"** defteri ve içerisindeki **${count}** sayfa kalıcı olarak silinecektir.\n\nBu işlem geri alınamaz. Devam etmek istediğinizden emin misiniz?`
+          `⚠️ Notebook **"${nbTitle}"** and all its **${count}** pages will be permanently deleted.\n\nThis action cannot be undone. Are you sure you want to continue?`
         ),
       },
     };
@@ -412,11 +412,11 @@ export class NotepadImportNotesTool implements vscode.LanguageModelTool<IImportN
     _token: vscode.CancellationToken
   ): Promise<vscode.PreparedToolInvocation> {
     return {
-      invocationMessage: 'Notlar içe aktarılıyor...',
+      invocationMessage: 'Importing notes...',
       confirmationMessages: {
-        title: 'Notları İçe Aktar (Import Notes)',
+        title: 'Import Notes',
         message: new vscode.MarkdownString(
-          `⚠️ İçe aktarma işlemi mevcut notlarınızın üzerine yazabilir veya yeni veriler ekleyebilir.\n\nBu işlemi onaylıyor musunuz?`
+          `⚠️ Importing notes may overwrite or merge with your current notes.\n\nDo you confirm this action?`
         ),
       },
     };

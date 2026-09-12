@@ -172,38 +172,38 @@ export class FileNotebookRepository implements INotebookRepository, vscode.Dispo
 
     const starterNotebook = Notebook.create(
       'Notepad Code',
-      'Hoş Geldiniz! / Welcome to Notepad Code'
+      'Welcome to Notepad Code'
     );
 
     const welcomePage = Page.create(
       starterNotebook.id,
-      'Başlangıç Kılavuzu',
-      `Notepad Code'a Hoş Geldiniz!
+      'Getting Started Guide',
+      `Welcome to Notepad Code!
 
-Notepad Code, tüm çalışma alanlarında ortak çalışan, VS Code temanızla kusursuz uyum sağlayan profesyonel not defterinizdir.
+Notepad Code is your professional developer notepad, accessible across all workspaces and seamlessly styled for your editor theme.
 
-Öne Çıkan Özellikler:
-• Evrensel Depolama: Farklı projelerde çalışsanız dahi tüm notlarınız tek bir merkezde kalır.
-• Defter & Sayfa Düzeni: Soldaki gezginden defterlerinizi ve altındaki sayfalarınızı yönetin.
-• Geniş Editör Sayfası: Notlarınızı kenar çubuğunda sıkışmadan, geniş bir editör sekmesinde rahatça yazın.
-• Otomatik Kayıt: Siz yazdıkça notlarınız anında ve kesintisiz kaydedilir.
-• Canlı Arama: Arama çubuğu ile tüm notlarınız arasında anında filtreleme yapın.
+Key Features:
+• Universal Storage: All your notes remain in one centralized location across projects.
+• Notebook & Page Structure: Organize your work into notebooks and pages from the left sidebar explorer.
+• Full Editor Tab: Enjoy distraction-free writing in a dedicated editor tab.
+• Auto-Save: Changes are saved instantly and continuously as you type.
+• Real-time Live Search: Instantly filter across all notebooks and pages using the search bar.
 
-İpuçları:
-• Yeni defter veya sayfa eklemek için sol üstteki minimalist butonları kullanabilirsiniz.
-• Önemli notları listenin en üstünde tutmak için sabitleyebilirsiniz.`
+Tips:
+• Use the top action buttons to create new notebooks and pages.
+• Pin important notes to keep them at the top of your list.`
     );
 
     const snippetPage = Page.create(
       starterNotebook.id,
-      'Fikirler ve Notlar',
-      `Proje Fikirleri ve Hatırlatmalar
+      'Ideas & Scratchpad',
+      `Project Ideas & Reminders
 
-Buraya günlük çalışma notlarınızı, mimari kararlarınızı veya TODO maddelerinizi doğrudan yazabilirsiniz:
+Use this space for daily scratch notes, architecture decisions, or quick TODO items:
 
-- UI tasarımını minimalist tut
-- Yeni özellikleri test et
-- Dokümantasyonu güncelle`
+- Keep UI clean and distraction-free
+- Test newly developed features
+- Keep documentation up to date`
     );
 
     welcomePage.setPinned(true);

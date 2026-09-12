@@ -106,7 +106,7 @@ function setupEventListeners() {
 
   // Toolbar buttons
   elements.btnNewNotebook.addEventListener('click', () => {
-    showModal('Yeni Defter Oluştur', 'Defter Adı...', (name) => {
+    showModal('Create New Notebook', 'Notebook Name...', (name) => {
       vscode.postMessage({ type: 'createNotebook', title: name });
     });
   });
@@ -114,12 +114,12 @@ function setupEventListeners() {
   elements.btnNewPage.addEventListener('click', () => {
     const targetNotebookId = state.activeNotebookId || (state.data.notebooks[0] && state.data.notebooks[0].id);
     if (!targetNotebookId) {
-      showModal('Önce Defter Oluşturun', 'Defter Adı...', (name) => {
+      showModal('Create Notebook First', 'Notebook Name...', (name) => {
         vscode.postMessage({ type: 'createNotebook', title: name });
       });
       return;
     }
-    showModal('Yeni Sayfa Oluştur', 'Sayfa Başlığı...', (title) => {
+    showModal('Create New Page', 'Page Title...', (title) => {
       vscode.postMessage({ type: 'createPage', notebookId: targetNotebookId, title });
     });
   });
@@ -161,9 +161,9 @@ function setupEventListeners() {
   elements.btnCopyPage.addEventListener('click', () => {
     const content = elements.editorTextarea.value;
     navigator.clipboard.writeText(content).then(() => {
-      elements.btnCopyPage.innerText = 'Kopyalandı!';
+      elements.btnCopyPage.innerText = 'Copied!';
       setTimeout(() => {
-        elements.btnCopyPage.innerHTML = '📋 Kopyala';
+        elements.btnCopyPage.innerHTML = '📋 Copy';
       }, 1500);
     });
   });
@@ -173,7 +173,7 @@ function setupEventListeners() {
     const page = getActivePage();
     if (!page) return;
 
-    if (confirm(`"${page.title}" sayfasını silmek istediğinize emin misiniz?`)) {
+    if (confirm(`Are you sure you want to delete page "${page.title}"?`)) {
       vscode.postMessage({
         type: 'deletePage',
         notebookId: state.activeNotebookId,
@@ -214,8 +214,8 @@ function renderNav() {
     elements.navPanel.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">📓</div>
-        <div class="empty-state-title">Not Defteri Bulunamadı</div>
-        <div class="empty-state-desc">İlk not defterinizi oluşturmak için yukarıdaki "+ Defter" butonuna tıklayın.</div>
+        <div class="empty-state-title">No Notebooks Found</div>
+        <div class="empty-state-desc">Click the "+ Notebook" button above to create your first notebook.</div>
       </div>
     `;
     return;
@@ -252,8 +252,8 @@ function renderNav() {
         <span class="notebook-count">${pages.length}</span>
       </div>
       <div class="notebook-actions">
-        <button class="action-icon-btn btn-add-page" title="Bu Deftere Sayfa Ekle">+</button>
-        <button class="action-icon-btn btn-delete-nb" title="Defteri Sil">✕</button>
+        <button class="action-icon-btn btn-add-page" title="Add Page to Notebook">+</button>
+        <button class="action-icon-btn btn-delete-nb" title="Delete Notebook">✕</button>
       </div>
     `;
 
@@ -272,7 +272,7 @@ function renderNav() {
     headerEl.querySelector('.btn-add-page').addEventListener('click', (e) => {
       e.stopPropagation();
       state.activeNotebookId = nb.id;
-      showModal(`"${nb.title}" için Yeni Sayfa`, 'Sayfa Başlığı...', (title) => {
+      showModal(`New Page for "${nb.title}"`, 'Page Title...', (title) => {
         vscode.postMessage({ type: 'createPage', notebookId: nb.id, title });
       });
     });
@@ -280,7 +280,7 @@ function renderNav() {
     // Delete notebook button
     headerEl.querySelector('.btn-delete-nb').addEventListener('click', (e) => {
       e.stopPropagation();
-      if (confirm(`"${nb.title}" defterini ve içindeki tüm sayfaları silmek istediğinize emin misiniz?`)) {
+      if (confirm(`Are you sure you want to delete notebook "${nb.title}" and all its pages?`)) {
         vscode.postMessage({ type: 'deleteNotebook', id: nb.id });
         if (state.activeNotebookId === nb.id) {
           state.activeNotebookId = null;
@@ -297,7 +297,7 @@ function renderNav() {
     pagesEl.className = 'pages-container';
 
     if (pages.length === 0) {
-      pagesEl.innerHTML = `<div style="padding: 6px 8px; font-size: 11px; color: var(--text-muted); font-style: italic;">Henüz sayfa yok.</div>`;
+      pagesEl.innerHTML = `<div style="padding: 6px 8px; font-size: 11px; color: var(--text-muted); font-style: italic;">No pages yet.</div>`;
     } else {
       pages.forEach((page) => {
         const isActivePage = state.activePageId === page.id;
@@ -305,13 +305,13 @@ function renderNav() {
         pageEl.className = `page-item ${isActivePage ? 'active-page' : ''}`;
         pageEl.innerHTML = `
           <div class="page-info">
-            ${page.isPinned ? '<span class="page-pin-indicator" title="Sabitlenmiş">📌</span>' : ''}
-            <span class="page-title-text">${escapeHtml(page.title || 'Başlıksız')}</span>
+            ${page.isPinned ? '<span class="page-pin-indicator" title="Pinned">📌</span>' : ''}
+            <span class="page-title-text">${escapeHtml(page.title || 'Untitled')}</span>
           </div>
           <div class="page-meta">${formatRelativeTime(page.updatedAt)}</div>
           <div class="page-actions">
-            <button class="action-icon-btn btn-pin-item" title="${page.isPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}">${page.isPinned ? '★' : '☆'}</button>
-            <button class="action-icon-btn btn-del-item" title="Sayfayı Sil">✕</button>
+            <button class="action-icon-btn btn-pin-item" title="${page.isPinned ? 'Unpin' : 'Pin'}">${page.isPinned ? '★' : '☆'}</button>
+            <button class="action-icon-btn btn-del-item" title="Delete Page">✕</button>
           </div>
         `;
 
@@ -330,7 +330,7 @@ function renderNav() {
 
         pageEl.querySelector('.btn-del-item').addEventListener('click', (e) => {
           e.stopPropagation();
-          if (confirm(`"${page.title}" sayfasını silmek istiyor musunuz?`)) {
+          if (confirm(`Are you sure you want to delete page "${page.title}"?`)) {
             vscode.postMessage({
               type: 'deletePage',
               notebookId: nb.id,
@@ -450,7 +450,7 @@ function handleContentChange() {
 function saveCurrentPage() {
   if (!state.activeNotebookId || !state.activePageId) return;
 
-  const title = elements.editorTitleInput.value.trim() || 'Başlıksız Sayfa';
+  const title = elements.editorTitleInput.value.trim() || 'Untitled Page';
   const content = elements.editorTextarea.value;
 
   vscode.postMessage({
@@ -462,7 +462,7 @@ function saveCurrentPage() {
   });
 
   elements.saveDot.classList.add('saved');
-  elements.saveStatus.innerText = 'Kaydedildi';
+  elements.saveStatus.innerText = 'Saved';
 
   // Also update local model in memory for instant feedback
   const page = getActivePage();
@@ -477,7 +477,7 @@ function updateStats() {
   const text = elements.editorTextarea.value || '';
   const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
   const chars = text.length;
-  elements.footerStats.innerText = `${words} kelime · ${chars} karakter`;
+  elements.footerStats.innerText = `${words} words · ${chars} characters`;
 }
 
 // =============================================================================
@@ -491,7 +491,7 @@ function renderMarkdownPreview() {
 
 function parseMarkdown(md) {
   if (!md.trim()) {
-    return '<p style="color: var(--text-muted); font-style: italic;">Sayfa içeriği boş. Yazmaya başlamak için "Yaz" sekmesine geçin.</p>';
+    return '<p style="color: var(--text-muted); font-style: italic;">Note content is empty. Switch to "Write" tab to start typing.</p>';
   }
 
   let html = escapeHtml(md);
@@ -597,9 +597,9 @@ function formatRelativeTime(timestamp) {
   const now = Date.now();
   const diffSec = Math.floor((now - timestamp) / 1000);
 
-  if (diffSec < 60) return 'şimdi';
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}d`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}s`;
+  if (diffSec < 60) return 'now';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h`;
   const date = new Date(timestamp);
   return `${date.getDate()}.${date.getMonth() + 1}`;
 }

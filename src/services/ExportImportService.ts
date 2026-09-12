@@ -68,7 +68,7 @@ export class ExportImportService {
   public async importDataFromString(jsonString: string): Promise<boolean> {
     const data: IStorageData = JSON.parse(jsonString);
     if (!data || !Array.isArray(data.notebooks)) {
-      throw new Error('Geçersiz Notepad Code yedek formatı. (Invalid backup format)');
+      throw new Error('Invalid Notepad Code backup format.');
     }
     await this._repository.importRawData(data);
     return true;
