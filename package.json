@@ -313,7 +313,7 @@
     "watch": "node esbuild.js --watch",
     "typecheck": "tsc --noEmit",
     "mcp:setup": "node mcp/auto-config.js",
-    "package": "vsce package --no-dependencies"
+    "package": "npx @vscode/vsce package --no-dependencies"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
