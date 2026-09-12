@@ -29,7 +29,9 @@ export class CommandRegistry {
     this._context.subscriptions.push(
       vscode.commands.registerCommand('notepadCode.openEditor', () => this._openEditor()),
       vscode.commands.registerCommand('notepadCode.newNotebook', () => this._newNotebook()),
+      vscode.commands.registerCommand('notepadCode.createNotebook', () => this._newNotebook()),
       vscode.commands.registerCommand('notepadCode.newPage', () => this._newPage()),
+      vscode.commands.registerCommand('notepadCode.createPage', () => this._newPage()),
       vscode.commands.registerCommand('notepadCode.exportNotes', () => this._exportNotes()),
       vscode.commands.registerCommand('notepadCode.importNotes', () => this._importNotes())
     );
