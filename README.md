@@ -11,6 +11,8 @@
 [![MCP Ready](https://img.shields.io/badge/MCP-Multi--IDE-000000?style=for-the-badge)](https://modelcontextprotocol.io/)
 [![Zero Dependencies](https://img.shields.io/badge/Runtime_Deps-0-000000?style=for-the-badge)](package.json)
 
+![IDE View](image.png)
+
 <p align="center">
   A theme-adaptive, distraction-free notebook & page organizer engineered for <b>VS Code</b>, <b>Cursor</b>, <b>Windsurf</b>, and <b>Google Antigravity</b>.<br/>
   Featuring <b>zero-config multi-IDE Model Context Protocol (MCP)</b>, real-time bi-directional disk sync, and native <b>GitHub Copilot</b> language tools.
