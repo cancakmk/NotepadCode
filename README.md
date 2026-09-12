@@ -4,7 +4,7 @@
 
 **The Minimalist, AI-Native Developer Notepad for Modern IDEs**
 
-[![GitHub Release](https://img.shields.io/github/v/release/cancakmk/NotepadCode?color=000000&style=for-the-badge)](https://github.com/cancakmk/NotepadCode/releases)
+[![GitHub Release](https://img.shields.io/github/v/release/cancakmk/NotepadCode?color=000000&logo=github&style=for-the-badge)](https://github.com/cancakmk/NotepadCode/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-000000?style=for-the-badge)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-000000?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS_Code-%5E1.85.0-000000?style=for-the-badge&logo=visualstudiocode)](https://marketplace.visualstudio.com/)
