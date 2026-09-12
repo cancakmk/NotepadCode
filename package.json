@@ -2,6 +2,7 @@
   "name": "notepad-code",
   "displayName": "Notepad Code",
   "description": "Minimalist black & white notebook and page organizer for VS Code, accessible across all workspaces.",
+  "icon": "media/icon.png",
   "version": "0.1.0",
   "publisher": "notepad-code",
   "engines": {
