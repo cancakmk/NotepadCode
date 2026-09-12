@@ -74,26 +74,32 @@ Designed around pure black (`#000000`) and pure white (`#FFFFFF`) palette tokens
 
 ---
 
-## 🤖 Multi-IDE & AI Integration
+## 🤖 Universal MCP Architecture (Multi-IDE)
 
-Notepad Code bridges human note-taking and autonomous AI coding agents:
+Notepad Code is built entirely around the open **Model Context Protocol (MCP)**. All IDEs connect to the unified Notepad Code MCP server, which manages local persistence and bi-directional real-time synchronization:
 
 ```
                     ┌───────────────────────────────────────────┐
                     │    ~/.notepad-code/notepad-code-data.json │
                     │           (Central JSON Storage)          │
                     └─────────────────────┬─────────────────────┘
+                                          │  Direct Read / Write / Watch
+                    ┌─────────────────────┴─────────────────────┐
+                    │       Notepad Code MCP Server             │
+                    │           (mcp/server.js)                 │
+                    │       Model Context Protocol (stdio)      │
+                    └─────────────────────┬─────────────────────┘
                                           │
-            ┌─────────────────────────────┼─────────────────────────────┐
-            ▼                             ▼                             ▼
-    ┌──────────────┐              ┌──────────────┐              ┌──────────────┐
-    │   VS Code    │              │    Cursor    │              │ Antigravity  │
-    │  (Copilot)   │              │  (Composer)  │              │  (AI Agent)  │
-    └──────────────┘              └──────────────┘              └──────────────┘
-     Language Model                  MCP Server                    MCP Server
-      Tools & Chat                 (mcp/server.js)               (mcp/server.js)
-            │                             │                             │
-            └─────────────────────────────┴─────────────────────────────┘
+        ┌───────────────────┬─────────────┼─────────────┬───────────────────┐
+        ▼                   ▼             ▼             ▼                   ▼
+ ┌─────────────┐     ┌─────────────┐┌───────────┐┌─────────────┐     ┌─────────────┐
+ │   VS Code   │     │   Cursor    ││Antigravity││  Windsurf   │     │ Claude / Zed│
+ │ (.vscode/   │     │ (.cursor/   ││(~/.gemini/││(~/.codeium/ │     │(claude_desk/│
+ │  mcp.json)  │     │  mcp.json)  ││mcp_config)││ mcp_config) │     │settings.json│
+ └─────────────┘     └─────────────┘└───────────┘└─────────────┘     └─────────────┘
+  (MCP Client)        (MCP Client)   (MCP Client) (MCP Client)        (MCP Client)
+        │                   │             │             │                   │
+        └───────────────────┴─────────────┼─────────────┴───────────────────┘
                                           │
                         Real-Time Bi-Directional Disk Sync
 ```

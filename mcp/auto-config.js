@@ -77,7 +77,64 @@ if (fs.existsSync(workspaceCursorDir)) {
   }
 }
 
-// 4. Windsurf (~/.codeium/windsurf/mcp_config.json)
+// 4. VS Code Workspace .vscode/mcp.json
+const workspaceVsCodeDir = path.join(process.cwd(), '.vscode');
+if (fs.existsSync(workspaceVsCodeDir)) {
+  const wsVsCodeMcp = path.join(workspaceVsCodeDir, 'mcp.json');
+  if (updateMcpConfigFile(wsVsCodeMcp, 'notepad-code', { command: 'node', args: [serverPath] })) {
+    results.push(`Workspace VS Code MCP (${wsVsCodeMcp})`);
+  }
+}
+
+// 5. Cline & Roo Code
+let baseStorage;
+if (process.platform === 'darwin') {
+  baseStorage = path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User', 'globalStorage');
+} else if (process.platform === 'win32') {
+  const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+  baseStorage = path.join(appData, 'Code', 'User', 'globalStorage');
+} else {
+  baseStorage = path.join(os.homedir(), '.config', 'Code', 'User', 'globalStorage');
+}
+
+if (baseStorage) {
+  const clineConfig = path.join(baseStorage, 'saoudrizwan.claude-dev', 'settings', 'cline_mcp_settings.json');
+  if (fs.existsSync(path.dirname(clineConfig))) {
+    if (updateMcpConfigFile(clineConfig, 'notepad-code', { command: 'node', args: [serverPath] })) {
+      results.push(`Cline (${clineConfig})`);
+    }
+  }
+
+  const rooConfig = path.join(baseStorage, 'rooveterinaryinc.roo-cline', 'settings', 'cline_mcp_settings.json');
+  if (fs.existsSync(path.dirname(rooConfig))) {
+    if (updateMcpConfigFile(rooConfig, 'notepad-code', { command: 'node', args: [serverPath] })) {
+      results.push(`Roo Code (${rooConfig})`);
+    }
+  }
+}
+
+// 6. Zed Editor
+const zedSettingsPath = path.join(os.homedir(), '.config', 'zed', 'settings.json');
+if (fs.existsSync(path.dirname(zedSettingsPath))) {
+  try {
+    let zedConfig = {};
+    if (fs.existsSync(zedSettingsPath)) {
+      zedConfig = JSON.parse(fs.readFileSync(zedSettingsPath, 'utf8')) || {};
+    }
+    if (!zedConfig.context_servers || typeof zedConfig.context_servers !== 'object') {
+      zedConfig.context_servers = {};
+    }
+    zedConfig.context_servers['notepad-code'] = {
+      command: { path: 'node', args: [serverPath] },
+    };
+    fs.writeFileSync(zedSettingsPath, JSON.stringify(zedConfig, null, 2) + '\n', 'utf8');
+    results.push(`Zed (${zedSettingsPath})`);
+  } catch (err) {
+    // Non-fatal
+  }
+}
+
+// 7. Windsurf (~/.codeium/windsurf/mcp_config.json)
 const windsurfDir = path.join(os.homedir(), '.codeium', 'windsurf');
 if (fs.existsSync(windsurfDir)) {
   const windsurfMcp = path.join(windsurfDir, 'mcp_config.json');
@@ -86,7 +143,7 @@ if (fs.existsSync(windsurfDir)) {
   }
 }
 
-// 5. Claude Desktop
+// 8. Claude Desktop
 let claudeDir;
 if (process.platform === 'darwin') {
   claudeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Claude');

@@ -62,6 +62,24 @@ export class McpAutoConfigService {
     }
 
     try {
+      this.configureVsCodeWorkspace(serverPath);
+    } catch (e) {
+      console.warn('[NotepadCode] Failed to auto-configure VS Code workspace MCP:', e);
+    }
+
+    try {
+      this.configureClineAndRoo(serverPath);
+    } catch (e) {
+      console.warn('[NotepadCode] Failed to auto-configure Cline/Roo Code:', e);
+    }
+
+    try {
+      this.configureZed(serverPath);
+    } catch (e) {
+      console.warn('[NotepadCode] Failed to auto-configure Zed:', e);
+    }
+
+    try {
       result.windsurfUpdated = this.configureWindsurf(serverPath);
     } catch (e) {
       console.warn('[NotepadCode] Failed to auto-configure Windsurf:', e);
@@ -226,5 +244,97 @@ export class McpAutoConfigService {
       command: 'node',
       args: [serverPath],
     });
+  }
+
+  /**
+   * Automatically configures open workspace's .vscode/mcp.json
+   */
+  private static configureVsCodeWorkspace(serverPath: string): boolean {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+      return false;
+    }
+
+    let updated = false;
+    for (const folder of workspaceFolders) {
+      const vscodeDir = path.join(folder.uri.fsPath, '.vscode');
+      const configPath = path.join(vscodeDir, 'mcp.json');
+      if (
+        this.updateMcpConfigFile(configPath, 'notepad-code', {
+          command: 'node',
+          args: [serverPath],
+        })
+      ) {
+        updated = true;
+      }
+    }
+    return updated;
+  }
+
+  /**
+   * Automatically configures Cline & Roo Code extensions
+   */
+  private static configureClineAndRoo(serverPath: string): boolean {
+    let baseStorage: string;
+    if (process.platform === 'darwin') {
+      baseStorage = path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User', 'globalStorage');
+    } else if (process.platform === 'win32') {
+      const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+      baseStorage = path.join(appData, 'Code', 'User', 'globalStorage');
+    } else {
+      baseStorage = path.join(os.homedir(), '.config', 'Code', 'User', 'globalStorage');
+    }
+
+    let updated = false;
+    // Cline
+    const clineConfig = path.join(baseStorage, 'saoudrizwan.claude-dev', 'settings', 'cline_mcp_settings.json');
+    if (fs.existsSync(path.dirname(clineConfig))) {
+      if (this.updateMcpConfigFile(clineConfig, 'notepad-code', { command: 'node', args: [serverPath] })) {
+        updated = true;
+      }
+    }
+
+    // Roo Code
+    const rooConfig = path.join(baseStorage, 'rooveterinaryinc.roo-cline', 'settings', 'cline_mcp_settings.json');
+    if (fs.existsSync(path.dirname(rooConfig))) {
+      if (this.updateMcpConfigFile(rooConfig, 'notepad-code', { command: 'node', args: [serverPath] })) {
+        updated = true;
+      }
+    }
+
+    return updated;
+  }
+
+  /**
+   * Automatically configures Zed Editor at ~/.config/zed/settings.json
+   */
+  private static configureZed(serverPath: string): boolean {
+    const zedSettingsPath = path.join(os.homedir(), '.config', 'zed', 'settings.json');
+    if (!fs.existsSync(path.dirname(zedSettingsPath))) {
+      return false;
+    }
+
+    try {
+      let config: any = {};
+      if (fs.existsSync(zedSettingsPath)) {
+        config = JSON.parse(fs.readFileSync(zedSettingsPath, 'utf8')) || {};
+      }
+
+      if (!config.context_servers || typeof config.context_servers !== 'object') {
+        config.context_servers = {};
+      }
+
+      config.context_servers['notepad-code'] = {
+        command: {
+          path: 'node',
+          args: [serverPath],
+        },
+      };
+
+      fs.writeFileSync(zedSettingsPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

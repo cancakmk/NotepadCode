@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "notepad-code": {
+      "command": "node",
+      "args": [
+        "/Users/can/Desktop/Notepad Code/mcp/server.js"
+      ]
+    }
+  }
+}
