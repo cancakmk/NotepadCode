@@ -3,7 +3,7 @@
     "notepad-code": {
       "command": "node",
       "args": [
-        "/Users/can/Desktop/Notepad Code/mcp/server.js"
+        "/Users/can/.vscode/extensions/notepad-code.notepad-code-0.1.0/mcp/server.js"
       ]
     }
   }
