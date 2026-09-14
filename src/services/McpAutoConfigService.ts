@@ -9,6 +9,7 @@ export interface McpConfigResult {
   windsurfUpdated: boolean;
   claudeUpdated: boolean;
   workspaceCursorUpdated: boolean;
+  vscodeUserUpdated: boolean;
   serverPath: string;
 }
 
@@ -40,6 +41,7 @@ export class McpAutoConfigService {
       windsurfUpdated: false,
       claudeUpdated: false,
       workspaceCursorUpdated: false,
+      vscodeUserUpdated: false,
       serverPath,
     };
 
@@ -62,9 +64,9 @@ export class McpAutoConfigService {
     }
 
     try {
-      this.configureVsCodeWorkspace(serverPath);
+      result.vscodeUserUpdated = this.configureVsCodeUser(serverPath);
     } catch (e) {
-      console.warn('[NotepadCode] Failed to auto-configure VS Code workspace MCP:', e);
+      console.warn('[NotepadCode] Failed to auto-configure VS Code user profile MCP:', e);
     }
 
     try {
@@ -96,11 +98,14 @@ export class McpAutoConfigService {
 
   /**
    * Helper to merge or update an MCP server configuration into a target JSON file.
+   * VS Code uses the `servers` root key with an explicit `type`, while Cursor/Claude/Windsurf
+   * use the `mcpServers` root key.
    */
   private static updateMcpConfigFile(
     configPath: string,
     serverName: string,
-    serverDef: { command: string; args: string[]; env?: Record<string, string> }
+    serverDef: { command: string; args: string[]; type?: string; env?: Record<string, string> },
+    rootKey: string = 'mcpServers'
   ): boolean {
     try {
       const dir = path.dirname(configPath);
@@ -118,22 +123,23 @@ export class McpAutoConfigService {
         }
       }
 
-      if (!config.mcpServers || typeof config.mcpServers !== 'object') {
-        config.mcpServers = {};
+      if (!config[rootKey] || typeof config[rootKey] !== 'object') {
+        config[rootKey] = {};
       }
 
-      const existing = config.mcpServers[serverName];
+      const existing = config[rootKey][serverName];
       const isAlreadyUpToDate =
         existing &&
         existing.command === serverDef.command &&
         Array.isArray(existing.args) &&
-        existing.args[0] === serverDef.args[0];
+        existing.args[0] === serverDef.args[0] &&
+        (!serverDef.type || existing.type === serverDef.type);
 
       if (isAlreadyUpToDate) {
         return false;
       }
 
-      config.mcpServers[serverName] = serverDef;
+      config[rootKey][serverName] = serverDef;
       fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
       return true;
     } catch (err) {
@@ -247,28 +253,47 @@ export class McpAutoConfigService {
   }
 
   /**
-   * Automatically configures open workspace's .vscode/mcp.json
+   * Automatically configures VS Code's user-level (global) MCP configuration at
+   * `<VS Code User profile folder>/mcp.json`, so Notepad Code is available as an MCP
+   * server in every workspace without touching `.vscode/mcp.json`.
+   * VS Code expects the `servers` schema with an explicit `"type": "stdio"`.
    */
-  private static configureVsCodeWorkspace(serverPath: string): boolean {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders || workspaceFolders.length === 0) {
-      return false;
-    }
-
+  private static configureVsCodeUser(serverPath: string): boolean {
     let updated = false;
-    for (const folder of workspaceFolders) {
-      const vscodeDir = path.join(folder.uri.fsPath, '.vscode');
-      const configPath = path.join(vscodeDir, 'mcp.json');
+
+    for (const userDir of this.getVsCodeUserDirs()) {
+      const configPath = path.join(userDir, 'mcp.json');
       if (
-        this.updateMcpConfigFile(configPath, 'notepad-code', {
-          command: 'node',
-          args: [serverPath],
-        })
+        this.updateMcpConfigFile(
+          configPath,
+          'notepad-code',
+          { type: 'stdio', command: 'node', args: [serverPath] },
+          'servers'
+        )
       ) {
         updated = true;
       }
     }
+
     return updated;
+  }
+
+  /**
+   * Resolves existing VS Code user profile directories (Stable + Insiders) for the current platform.
+   */
+  private static getVsCodeUserDirs(): string[] {
+    let base: string;
+    if (process.platform === 'darwin') {
+      base = path.join(os.homedir(), 'Library', 'Application Support');
+    } else if (process.platform === 'win32') {
+      base = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+    } else {
+      base = path.join(os.homedir(), '.config');
+    }
+
+    return ['Code', 'Code - Insiders']
+      .map((appName) => path.join(base, appName, 'User'))
+      .filter((userDir) => fs.existsSync(userDir));
   }
 
   /**

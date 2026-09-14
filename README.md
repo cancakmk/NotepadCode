@@ -55,7 +55,7 @@ No JSON configuration hassles. Upon activation, Notepad Code automatically detec
 - **Google Antigravity** (`~/.gemini/config/mcp_config.json`)
 - **Windsurf** (`~/.codeium/windsurf/mcp_config.json`)
 - **Claude Desktop** (`claude_desktop_config.json` on macOS, Windows, Linux)
-- **VS Code** (11 native Language Model Tools + `@notepad` Chat Participant)
+- **VS Code** (user profile `mcp.json` — global across all workspaces, plus 11 native Language Model Tools + `@notepad` Chat Participant)
 
 ### ⚡ Real-Time Live Disk Synchronization
 When an AI agent (such as Cursor Composer or Antigravity) creates, updates, or deletes a note in the background, your active editor and sidebar update **instantly and automatically** via an integrated file watcher — no reload required.

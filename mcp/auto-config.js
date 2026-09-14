@@ -18,7 +18,7 @@ try {
   // Ignore
 }
 
-function updateMcpConfigFile(configPath, serverName, serverDef) {
+function updateMcpConfigFile(configPath, serverName, serverDef, rootKey = 'mcpServers') {
   try {
     const dir = path.dirname(configPath);
     if (!fs.existsSync(dir)) {
@@ -35,11 +35,11 @@ function updateMcpConfigFile(configPath, serverName, serverDef) {
       }
     }
 
-    if (!config.mcpServers || typeof config.mcpServers !== 'object') {
-      config.mcpServers = {};
+    if (!config[rootKey] || typeof config[rootKey] !== 'object') {
+      config[rootKey] = {};
     }
 
-    config.mcpServers[serverName] = serverDef;
+    config[rootKey][serverName] = serverDef;
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
     return true;
   } catch (err) {
@@ -77,12 +77,29 @@ if (fs.existsSync(workspaceCursorDir)) {
   }
 }
 
-// 4. VS Code Workspace .vscode/mcp.json
-const workspaceVsCodeDir = path.join(process.cwd(), '.vscode');
-if (fs.existsSync(workspaceVsCodeDir)) {
-  const wsVsCodeMcp = path.join(workspaceVsCodeDir, 'mcp.json');
-  if (updateMcpConfigFile(wsVsCodeMcp, 'notepad-code', { command: 'node', args: [serverPath] })) {
-    results.push(`Workspace VS Code MCP (${wsVsCodeMcp})`);
+// 4. VS Code User Profile (<User folder>/mcp.json) - global across all workspaces
+let vsCodeBase;
+if (process.platform === 'darwin') {
+  vsCodeBase = path.join(os.homedir(), 'Library', 'Application Support');
+} else if (process.platform === 'win32') {
+  vsCodeBase = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+} else {
+  vsCodeBase = path.join(os.homedir(), '.config');
+}
+for (const appName of ['Code', 'Code - Insiders']) {
+  const userDir = path.join(vsCodeBase, appName, 'User');
+  if (fs.existsSync(userDir)) {
+    const vsCodeUserMcp = path.join(userDir, 'mcp.json');
+    if (
+      updateMcpConfigFile(
+        vsCodeUserMcp,
+        'notepad-code',
+        { type: 'stdio', command: 'node', args: [serverPath] },
+        'servers'
+      )
+    ) {
+      results.push(`VS Code User Profile (${vsCodeUserMcp})`);
+    }
   }
 }
 
