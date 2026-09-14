@@ -103,6 +103,9 @@ ${JSON.stringify(summaryContext, null, 2)}`;
   };
 
   const participant = vscode.chat.createChatParticipant('notepad-code.participant', handler);
-  participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'notepad-icon.svg');
+  participant.iconPath = {
+    light: vscode.Uri.joinPath(context.extensionUri, 'media', 'notepad-icon-light.svg'),
+    dark: vscode.Uri.joinPath(context.extensionUri, 'media', 'notepad-icon-dark.svg'),
+  };
   return participant;
 }

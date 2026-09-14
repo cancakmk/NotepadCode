@@ -235,7 +235,9 @@ Notepad Code/
 │   ├── server.js                   # Zero-dependency stdio JSON-RPC MCP server
 │   └── auto-config.js              # Standalone multi-IDE configuration script
 ├── media/
-│   └── notepad-icon.svg            # Custom SVG branding
+│   ├── notepad-icon.svg            # Activity bar / view container branding
+│   ├── notepad-icon-light.svg      # Tab & chat icon for light themes
+│   └── notepad-icon-dark.svg       # Tab & chat icon for dark themes
 ├── src/
 │   ├── commands/                   # VS Code command palette registrations
 │   ├── controllers/                # Webview controllers (Sidebar & Full Editor Tab)

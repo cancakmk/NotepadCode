@@ -81,7 +81,10 @@ export class NotepadEditorPanel {
     this._activePageId = initialPageId;
     this._onDidUpdateData = onDidUpdateData;
 
-    this._panel.iconPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'notepad-icon.svg');
+    this._panel.iconPath = {
+      light: vscode.Uri.joinPath(this._extensionUri, 'media', 'notepad-icon-light.svg'),
+      dark: vscode.Uri.joinPath(this._extensionUri, 'media', 'notepad-icon-dark.svg'),
+    };
     this._panel.webview.html = getEditorHtml(this._panel.webview, this._extensionUri);
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
