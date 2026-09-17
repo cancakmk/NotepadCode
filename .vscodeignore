@@ -1,0 +1,21 @@
+# Development sources — everything that ships is bundled into dist/ by esbuild
+src/**
+esbuild.js
+tsconfig.json
+package-lock.json
+.gitignore
+
+# Editor and agent metadata that is not needed at runtime
+.vscode/**
+.cursor/**
+.agents/**
+mcp_config.json
+
+# Never needed: the extension host bundle and the webview bundle are self-contained
+node_modules/**
+
+# Duplicate of media/icon.png, which is the icon referenced by package.json
+icon.png
+
+# Previously built packages must not be packed into a new one
+*.vsix

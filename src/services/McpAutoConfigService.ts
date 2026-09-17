@@ -97,9 +97,71 @@ export class McpAutoConfigService {
   }
 
   /**
+   * Parses JSON with comments and trailing commas (VS Code and Zed config files
+   * are JSONC, and users frequently annotate them).
+   */
+  private static parseJsonc(text: string): any {
+    let out = '';
+    let inString = false;
+    let inLineComment = false;
+    let inBlockComment = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i + 1];
+
+      if (inLineComment) {
+        if (ch === '\n') {
+          inLineComment = false;
+          out += ch;
+        }
+        continue;
+      }
+      if (inBlockComment) {
+        if (ch === '*' && next === '/') {
+          inBlockComment = false;
+          i++;
+        }
+        continue;
+      }
+      if (inString) {
+        out += ch;
+        if (ch === '\\') {
+          out += next ?? '';
+          i++;
+          continue;
+        }
+        if (ch === '"') {
+          inString = false;
+        }
+        continue;
+      }
+      if (ch === '"') {
+        inString = true;
+        out += ch;
+        continue;
+      }
+      if (ch === '/' && next === '/') {
+        inLineComment = true;
+        i++;
+        continue;
+      }
+      if (ch === '/' && next === '*') {
+        inBlockComment = true;
+        i++;
+        continue;
+      }
+      out += ch;
+    }
+
+    return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
+  }
+
+  /**
    * Helper to merge or update an MCP server configuration into a target JSON file.
    * VS Code uses the `servers` root key with an explicit `type`, while Cursor/Claude/Windsurf
    * use the `mcpServers` root key.
+   * A file that exists but cannot be read or parsed is left completely untouched.
    */
   private static updateMcpConfigFile(
     configPath: string,
@@ -115,11 +177,16 @@ export class McpAutoConfigService {
 
       let config: any = {};
       if (fs.existsSync(configPath)) {
-        try {
-          const content = fs.readFileSync(configPath, 'utf8');
-          config = JSON.parse(content) || {};
-        } catch {
-          config = {};
+        const content = fs.readFileSync(configPath, 'utf8');
+        if (content.trim().length > 0) {
+          try {
+            config = this.parseJsonc(content) || {};
+          } catch (err) {
+            // Never replace a user's config we do not understand — doing so would
+            // silently delete every other MCP server they have configured.
+            console.warn(`[NotepadCode] ${configPath} is not valid JSON/JSONC; leaving it untouched.`);
+            return false;
+          }
         }
       }
 
@@ -140,7 +207,11 @@ export class McpAutoConfigService {
       }
 
       config[rootKey][serverName] = serverDef;
-      fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
+
+      // Atomic replace so an interrupted write cannot corrupt the user's config.
+      const tmpPath = `${configPath}.${process.pid}.tmp`;
+      fs.writeFileSync(tmpPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
+      fs.renameSync(tmpPath, configPath);
       return true;
     } catch (err) {
       console.error(`[NotepadCode] Error updating ${configPath}:`, err);

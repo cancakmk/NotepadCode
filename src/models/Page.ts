@@ -1,4 +1,5 @@
 import { IPageDTO } from './types';
+import { contentToPlainText } from '../utils/noteContent';
 
 /**
  * Domain entity representing an individual page in a notebook.
@@ -9,7 +10,6 @@ export class Page {
   private _notebookId: string;
   private _title: string;
   private _content: string;
-  private _isPinned: boolean;
   private _createdAt: number;
   private _updatedAt: number;
 
@@ -18,7 +18,6 @@ export class Page {
     notebookId: string,
     title: string,
     content: string = '',
-    isPinned: boolean = false,
     createdAt: number = Date.now(),
     updatedAt: number = Date.now()
   ) {
@@ -33,7 +32,6 @@ export class Page {
     this._notebookId = notebookId;
     this._title = title.trim() || 'Untitled Page';
     this._content = content;
-    this._isPinned = isPinned;
     this._createdAt = createdAt;
     this._updatedAt = updatedAt;
   }
@@ -53,10 +51,6 @@ export class Page {
 
   public get content(): string {
     return this._content;
-  }
-
-  public get isPinned(): boolean {
-    return this._isPinned;
   }
 
   public get createdAt(): number {
@@ -86,21 +80,8 @@ export class Page {
     }
   }
 
-  public togglePin(): boolean {
-    this._isPinned = !this._isPinned;
-    this._touch();
-    return this._isPinned;
-  }
-
-  public setPinned(pinned: boolean): void {
-    if (this._isPinned !== pinned) {
-      this._isPinned = pinned;
-      this._touch();
-    }
-  }
-
   public getWordCount(): number {
-    const text = this._content.trim();
+    const text = contentToPlainText(this._content).trim();
     if (!text) {
       return 0;
     }
@@ -108,7 +89,7 @@ export class Page {
   }
 
   public getCharacterCount(): number {
-    return this._content.length;
+    return contentToPlainText(this._content).length;
   }
 
   public getEstimatedReadingTimeMinutes(): number {
@@ -126,7 +107,6 @@ export class Page {
       notebookId: this._notebookId,
       title: this._title,
       content: this._content,
-      isPinned: this._isPinned,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
     };
@@ -138,7 +118,6 @@ export class Page {
       dto.notebookId,
       dto.title,
       dto.content ?? '',
-      dto.isPinned ?? false,
       dto.createdAt ?? Date.now(),
       dto.updatedAt ?? Date.now()
     );
@@ -146,6 +125,6 @@ export class Page {
 
   public static create(notebookId: string, title: string, content: string = ''): Page {
     const id = 'page_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
-    return new Page(id, notebookId, title, content, false, Date.now(), Date.now());
+    return new Page(id, notebookId, title, content, Date.now(), Date.now());
   }
 }

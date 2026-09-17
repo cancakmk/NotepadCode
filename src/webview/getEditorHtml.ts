@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Icons } from './icons';
+import { loadStyles } from './styles';
 
 /**
  * Generates the HTML for the Editor Tab Webview.
@@ -14,25 +15,46 @@ export function getEditorHtml(
 ): string {
   const nonce = getNonce();
 
-  let cssContent = '';
+  const cssContent = loadStyles(extensionUri);
+
+  // The Tiptap rich text editor is bundled separately into dist/webview/editor.js
+  const scriptUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'editor.js')
+  );
+
+  // KaTeX ships its own stylesheet and web fonts. Both are copied into
+  // dist/webview by the build; font URLs are rewritten to webview URIs so
+  // nothing is ever loaded from a CDN.
+  let katexCss = '';
   try {
-    const cssPath = path.join(extensionUri.fsPath, 'src', 'webview', 'styles', 'monochrome.css');
-    if (fs.existsSync(cssPath)) {
-      cssContent = fs.readFileSync(cssPath, 'utf8');
+    const katexCandidates = [
+      path.join(extensionUri.fsPath, 'dist', 'webview', 'katex.min.css'),
+      path.join(extensionUri.fsPath, 'node_modules', 'katex', 'dist', 'katex.min.css'),
+    ];
+    const katexPath = katexCandidates.find((candidate) => fs.existsSync(candidate));
+
+    if (katexPath) {
+      const fontDir = webview.asWebviewUri(
+        vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'fonts')
+      );
+      katexCss = fs
+        .readFileSync(katexPath, 'utf8')
+        .replace(/url\(fonts\/([^)]+)\)/g, `url(${fontDir}/$1)`);
     }
   } catch (err) {
-    console.error('Failed to read monochrome.css:', err);
+    console.error('Failed to read katex.min.css:', err);
   }
 
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; font-src ${webview.cspSource};">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}'; font-src ${webview.cspSource}; img-src ${webview.cspSource} data: https:;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Note Editor</title>
   <style>
     ${cssContent}
+    ${katexCss}
   </style>
 </head>
 <body>
@@ -53,166 +75,93 @@ export function getEditorHtml(
     <!-- Main Note Canvas -->
     <main class="note-canvas">
       <input type="text" id="note-title" class="note-title-input" placeholder="Untitled Note" title="Note Title" spellcheck="false" autocomplete="off" />
-      <textarea id="note-body" class="note-body-textarea" placeholder="Type your notes directly here..." title="Note Content" spellcheck="false"></textarea>
+      <div id="note-body" class="np-editor-mount"></div>
     </main>
+
+    <!-- Floating toolbar shown for a text selection -->
+    <div id="bubble-menu" class="np-bubble-menu">
+      <div class="bubble-row">
+        <button data-action="bold" title="Bold (Cmd+B)" style="font-weight: 700;">B</button>
+        <button data-action="italic" title="Italic (Cmd+I)" style="font-style: italic;">I</button>
+        <button data-action="underline" title="Underline (Cmd+U)" style="text-decoration: underline;">U</button>
+        <button data-action="strike" title="Strikethrough (Cmd+Shift+S)"><s>S</s></button>
+        <button data-action="code" title="Inline code (Cmd+E)" style="font-family: var(--font-mono); font-size: 11px;">&lt;/&gt;</button>
+        <button data-action="highlight" title="Highlight">
+          <span style="border-bottom: 3px solid currentColor;">H</span>
+        </button>
+        <button data-action="superscript" title="Superscript">x<sup>2</sup></button>
+        <button data-action="subscript" title="Subscript">x<sub>2</sub></button>
+        <span class="bubble-sep"></span>
+        <button data-action="link" title="Link">Link</button>
+        <button data-action="link-remove" title="Remove link">Unlink</button>
+        <button data-action="clear" title="Clear formatting">Clear</button>
+      </div>
+      <div class="bubble-row">
+        <button data-align="left" title="Align left">&#8676;</button>
+        <button data-align="center" title="Align center">&#8660;</button>
+        <button data-align="right" title="Align right">&#8677;</button>
+        <button data-align="justify" title="Justify">&#8801;</button>
+        <span class="bubble-sep"></span>
+        <button data-action="blockquote" title="Quote">&#10077;</button>
+        <button data-action="codeblock" title="Code block">&lt;/&gt;</button>
+        <button id="block-convert" title="Turn into...">Turn into</button>
+      </div>
+    </div>
+
+    <!-- Floating toolbar for table editing -->
+    <div id="table-menu" class="np-bubble-menu"></div>
+
+    <!-- Notion-style quick add buttons that appear on the table edges -->
+    <div class="np-table-handles">
+      <button id="table-handle-column" class="np-table-handle" title="Add column">+</button>
+      <button id="table-handle-row" class="np-table-handle" title="Add row">+</button>
+    </div>
+
+    <!-- Slash (/) block inserter -->
+    <div id="slash-menu" class="np-slash-menu"></div>
+
+    <!-- Floating language switcher shown while editing a code block -->
+    <div id="code-menu" class="np-bubble-menu">
+      <div class="bubble-row">
+        <button id="code-lang-button" title="Choose the code block language">
+          <span id="code-lang-label">Plain text</span> <span class="code-lang-caret">&#9662;</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Code language list -->
+    <div id="code-lang-picker" class="np-popover"></div>
+
+    <!-- Emoji picker -->
+    <div id="emoji-picker" class="np-popover"></div>
+
+    <!-- Text styling popover (font, size, colors) -->
+    <div id="style-picker" class="np-popover"></div>
+
+    <!-- Small input dialog (link URL, math, image, table size) -->
+    <div id="input-dialog" class="np-dialog-overlay">
+      <div class="np-dialog">
+        <div id="input-dialog-title" class="np-dialog-title">Input</div>
+        <input id="input-dialog-field" class="np-dialog-input" type="text" spellcheck="false" />
+        <div class="np-dialog-hint" id="input-dialog-hint"></div>
+        <div class="np-dialog-actions">
+          <button id="input-dialog-cancel" class="btn-minimal">Cancel</button>
+          <button id="input-dialog-submit" class="btn-minimal">Insert</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Footer Stats -->
     <footer class="note-footer-bar">
       <span id="note-stats" title="Word and Character Count">0 words · 0 characters</span>
+      <div class="footer-view-toggles">
+        <button id="btn-focus" class="btn-minimal" title="Focus mode — dim everything but the current block">Focus</button>
+        <button id="btn-invisible" class="btn-minimal" title="Show invisible characters (spaces, breaks)">&#182;</button>
+      </div>
     </footer>
   </div>
 
-  <script nonce="${nonce}">
-    (function() {
-      const vscode = acquireVsCodeApi();
-
-      const icons = {
-        copy: \`${Icons.copy}\`,
-        check: \`${Icons.check}\`,
-        trash: \`${Icons.trash}\`
-      };
-
-      const state = {
-        data: { notebooks: [] },
-        activeNotebookId: null,
-        activePageId: null,
-        saveTimeout: null,
-      };
-
-      const elements = {
-        noteTitle: document.getElementById('note-title'),
-        noteBody: document.getElementById('note-body'),
-        noteStats: document.getElementById('note-stats'),
-        saveCircle: document.getElementById('save-circle'),
-        saveText: document.getElementById('save-text'),
-        btnCopy: document.getElementById('btn-copy'),
-        btnDelete: document.getElementById('btn-delete'),
-      };
-
-      function init() {
-        setupEventListeners();
-        vscode.postMessage({ type: 'ready' });
-      }
-
-      function setupEventListeners() {
-        window.addEventListener('message', (event) => {
-          const msg = event.data;
-          if (msg.type === 'syncData') {
-            state.data = msg.data;
-            refreshEditor();
-          } else if (msg.type === 'pageSelected') {
-            state.activeNotebookId = msg.notebookId;
-            state.activePageId = msg.pageId;
-            loadPage(msg.notebookId, msg.pageId);
-          }
-        });
-
-        elements.noteTitle.addEventListener('input', onContentChange);
-        elements.noteBody.addEventListener('input', onContentChange);
-
-        elements.btnCopy.addEventListener('click', () => {
-          const title = elements.noteTitle.value;
-          const body = elements.noteBody.value;
-          const fullText = (title ? title + '\\n\\n' : '') + body;
-          navigator.clipboard.writeText(fullText).then(() => {
-            elements.btnCopy.innerHTML = icons.check;
-            elements.btnCopy.title = 'Copied to Clipboard!';
-            setTimeout(() => {
-              elements.btnCopy.innerHTML = icons.copy;
-              elements.btnCopy.title = 'Copy Full Note to Clipboard';
-            }, 1500);
-          });
-        });
-
-        elements.btnDelete.addEventListener('click', () => {
-          if (!state.activeNotebookId || !state.activePageId) return;
-          vscode.postMessage({
-            type: 'deletePage',
-            notebookId: state.activeNotebookId,
-            pageId: state.activePageId,
-          });
-        });
-      }
-
-      function loadPage(notebookId, pageId) {
-        state.activeNotebookId = notebookId;
-        state.activePageId = pageId;
-
-        const page = getCurrentPage();
-        if (page) {
-          elements.noteTitle.value = page.title || '';
-          elements.noteBody.value = page.content || '';
-          updateStats();
-        }
-      }
-
-      function refreshEditor() {
-        const page = getCurrentPage();
-        if (page) {
-          if (document.activeElement !== elements.noteTitle && document.activeElement !== elements.noteBody) {
-            elements.noteTitle.value = page.title || '';
-            elements.noteBody.value = page.content || '';
-          }
-          updateStats();
-        }
-      }
-
-      function getCurrentPage() {
-        if (!state.activeNotebookId || !state.activePageId) return null;
-        const nb = (state.data.notebooks || []).find((n) => n.id === state.activeNotebookId);
-        if (!nb) return null;
-        return (nb.pages || []).find((p) => p.id === state.activePageId);
-      }
-
-      function onContentChange() {
-        elements.saveCircle.classList.remove('saved');
-        elements.saveText.innerText = 'Saving...';
-        updateStats();
-
-        if (state.saveTimeout) {
-          clearTimeout(state.saveTimeout);
-        }
-
-        state.saveTimeout = setTimeout(() => {
-          savePage();
-        }, 350);
-      }
-
-      function savePage() {
-        if (!state.activeNotebookId || !state.activePageId) return;
-
-        const title = elements.noteTitle.value.trim() || 'Untitled Note';
-        const content = elements.noteBody.value;
-
-        vscode.postMessage({
-          type: 'updatePage',
-          notebookId: state.activeNotebookId,
-          pageId: state.activePageId,
-          title: title,
-          content: content,
-        });
-
-        elements.saveCircle.classList.add('saved');
-        elements.saveText.innerText = 'Saved';
-
-        const page = getCurrentPage();
-        if (page) {
-          page.title = title;
-          page.content = content;
-          page.updatedAt = Date.now();
-        }
-      }
-
-      function updateStats() {
-        const text = elements.noteBody.value || '';
-        const words = text.trim() ? text.trim().split(/\\s+/).filter(Boolean).length : 0;
-        const chars = text.length;
-        elements.noteStats.innerText = \`\${words} words · \${chars} characters\`;
-      }
-
-      init();
-    })();
-  </script>
+  <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;
 }

@@ -96,9 +96,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // 7. Register @notepad Chat Participant
   if (vscode.chat && typeof vscode.chat.createChatParticipant === 'function') {
     context.subscriptions.push(
-      registerNotepadChatParticipant(context, notebookService, exportImportService, () =>
-        webviewProvider.syncData()
-      )
+      registerNotepadChatParticipant(context, notebookService)
     );
   }
 

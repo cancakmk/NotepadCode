@@ -19,6 +19,7 @@ export class NotepadEditorPanel {
   private _onDidUpdateData?: () => void;
   private _activeNotebookId?: string;
   private _activePageId?: string;
+  private _isDisposed = false;
 
   public static createOrShow(
     extensionUri: vscode.Uri,
@@ -35,7 +36,7 @@ export class NotepadEditorPanel {
     if (NotepadEditorPanel.currentPanel) {
       NotepadEditorPanel.currentPanel._panel.reveal(column);
       if (initialNotebookId && initialPageId) {
-        NotepadEditorPanel.currentPanel.selectPage(initialNotebookId, initialPageId);
+        void NotepadEditorPanel.currentPanel.selectPage(initialNotebookId, initialPageId);
       }
       return NotepadEditorPanel.currentPanel;
     }
@@ -107,18 +108,44 @@ export class NotepadEditorPanel {
       type: 'syncData',
       data: data,
     });
-    if (this._activeNotebookId && this._activePageId) {
-      this.selectPage(this._activeNotebookId, this._activePageId);
+
+    if (!this._activeNotebookId || !this._activePageId) {
+      return;
+    }
+
+    // The webview keeps its own copy of the data, so a deleted (or moved) page
+    // must be signalled explicitly — otherwise the editor keeps showing stale
+    // content and every keystroke would fail with "Page not found".
+    const notebook = data.notebooks.find((nb) => nb.id === this._activeNotebookId);
+    const page = notebook?.pages.find((p) => p.id === this._activePageId);
+
+    if (page) {
+      this._postPageSelected(this._activeNotebookId, this._activePageId);
+    } else {
+      this._clearActivePage();
     }
   }
 
-  public selectPage(notebookId: string, pageId: string): void {
+  public async selectPage(notebookId: string, pageId: string): Promise<void> {
     this._activeNotebookId = notebookId;
     this._activePageId = pageId;
 
     // Also update tab title to current page name
-    this._updateTabTitle(notebookId, pageId);
+    void this._updateTabTitle(notebookId, pageId);
 
+    // Push fresh data first: the webview keeps its own in-memory copy, so pages
+    // created after the panel was opened would otherwise not resolve.
+    await this.syncData();
+  }
+
+  private _clearActivePage(): void {
+    this._activeNotebookId = undefined;
+    this._activePageId = undefined;
+    this._panel.title = 'Notepad Code - Note Editor';
+    this._panel.webview.postMessage({ type: 'pageCleared' });
+  }
+
+  private _postPageSelected(notebookId: string, pageId: string): void {
     this._panel.webview.postMessage({
       type: 'pageSelected',
       notebookId,
@@ -140,10 +167,8 @@ export class NotepadEditorPanel {
     try {
       switch (message.type) {
         case 'ready':
+          // syncData() also re-posts the active page selection once ids are set
           await this.syncData();
-          if (this._activeNotebookId && this._activePageId) {
-            this.selectPage(this._activeNotebookId, this._activePageId);
-          }
           break;
 
         case 'updatePage':
@@ -151,16 +176,9 @@ export class NotepadEditorPanel {
             message.notebookId,
             message.pageId,
             message.title,
-            message.content,
-            message.isPinned
+            message.content
           );
           this._updateTabTitle(message.notebookId, message.pageId);
-          this._notifyUpdate();
-          break;
-
-        case 'togglePinPage':
-          await this._notebookService.togglePinPage(message.notebookId, message.pageId);
-          await this.syncData();
           this._notifyUpdate();
           break;
 
@@ -193,7 +211,14 @@ export class NotepadEditorPanel {
   }
 
   public dispose(): void {
-    NotepadEditorPanel.currentPanel = undefined;
+    if (this._isDisposed) {
+      return;
+    }
+    this._isDisposed = true;
+
+    if (NotepadEditorPanel.currentPanel === this) {
+      NotepadEditorPanel.currentPanel = undefined;
+    }
     this._panel.dispose();
     while (this._disposables.length) {
       const d = this._disposables.pop();

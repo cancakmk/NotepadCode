@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import { NotebookService } from '../services/NotebookService';
-import { ExportImportService } from '../services/ExportImportService';
+import { contentToPlainText } from '../utils/noteContent';
 
 /**
  * Registers the @notepad chat participant in VS Code Copilot.
  * Allows interactive natural-language conversations with notes and slash commands like /list and /search.
+ * The participant is read-only: notebooks are created, edited and deleted through the
+ * notepad_* language model tools (agent mode) or the Notepad Code UI.
  */
 export function registerNotepadChatParticipant(
   context: vscode.ExtensionContext,
-  notebookService: NotebookService,
-  _exportImportService: ExportImportService,
-  onDataChanged: () => void
+  notebookService: NotebookService
 ): vscode.Disposable {
   const handler: vscode.ChatRequestHandler = async (
     request: vscode.ChatRequest,
@@ -24,7 +24,7 @@ export function registerNotepadChatParticipant(
     if (request.command === 'list') {
       const notebooks = await notebookService.getAllNotebooks();
       if (notebooks.length === 0) {
-        stream.markdown('No notebooks found yet. You can create a new notebook by asking `@notepad create a notebook named My Notes`.\n');
+        stream.markdown('No notebooks found yet. Create one from the Notepad Code sidebar, or ask Copilot in agent mode to run `notepad_create_notebook`.');
         return;
       }
 
@@ -78,11 +78,17 @@ export function registerNotepadChatParticipant(
       const summaryContext = allNotebooks.map((nb) => ({
         id: nb.id,
         title: nb.title,
-        pages: nb.getPages().map((p) => ({ id: p.id, title: p.title, snippet: p.content.slice(0, 100) })),
+        pages: nb.getPages().map((p) => ({
+          id: p.id,
+          title: p.title,
+          snippet: contentToPlainText(p.content).slice(0, 100),
+        })),
       }));
 
       const systemPrompt = `You are the official assistant for Notepad Code, a minimalist note-taking extension in VS Code.
-You can read, search, organize, create, and manage the user's notebooks and pages.
+In this chat you are READ-ONLY: you can answer questions, summarize, and search the notes provided below, but you cannot create, edit, rename, or delete anything.
+If the user asks for a change, explain that they can either use the Notepad Code sidebar/editor, or ask Copilot in agent mode to run the notepad_* tools (notepad_create_page, notepad_update_page, notepad_delete_page, ...).
+Never claim to have performed a change you did not make.
 When answering, be helpful, concise, and format notes with markdown.
 Current Notebooks Context:
 ${JSON.stringify(summaryContext, null, 2)}`;

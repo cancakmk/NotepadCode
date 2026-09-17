@@ -7,7 +7,6 @@ export interface IPageDTO {
   notebookId: string;
   title: string;
   content: string;
-  isPinned: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -43,18 +42,15 @@ export type WebviewMessageToExtension =
   | { type: 'updateNotebook'; id: string; title: string; description?: string }
   | { type: 'deleteNotebook'; id: string }
   | { type: 'createPage'; notebookId: string; title: string; content?: string }
-  | { type: 'updatePage'; notebookId: string; pageId: string; title: string; content: string; isPinned?: boolean }
+  | { type: 'updatePage'; notebookId: string; pageId: string; title: string; content: string }
   | { type: 'deletePage'; notebookId: string; pageId: string }
-  | { type: 'togglePinPage'; notebookId: string; pageId: string }
-  | { type: 'selectPage'; notebookId: string; pageId: string }
   | { type: 'openInEditor'; notebookId: string; pageId: string }
   | { type: 'reorderNotebooks'; notebookIds: string[] }
   | { type: 'reorderPages'; notebookId: string; pageIds: string[] }
-  | { type: 'movePage'; pageId: string; sourceNotebookId: string; targetNotebookId: string; targetIndex: number }
   | { type: 'exportData' }
   | { type: 'importData'; data: string };
 
 export type ExtensionMessageToWebview =
   | { type: 'syncData'; data: IStorageData }
   | { type: 'pageSelected'; notebookId: string; pageId: string }
-  | { type: 'notification'; message: string; level?: 'info' | 'warn' | 'error' };
+  | { type: 'pageCleared'; reason?: string };

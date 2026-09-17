@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
 import { Icons } from './icons';
+import { loadStyles } from './styles';
 
 /**
  * Generates the HTML for the Sidebar Explorer Webview.
@@ -14,15 +13,7 @@ export function getSidebarHtml(
 ): string {
   const nonce = getNonce();
 
-  let cssContent = '';
-  try {
-    const cssPath = path.join(extensionUri.fsPath, 'src', 'webview', 'styles', 'monochrome.css');
-    if (fs.existsSync(cssPath)) {
-      cssContent = fs.readFileSync(cssPath, 'utf8');
-    }
-  } catch (err) {
-    console.error('Failed to read monochrome.css:', err);
-  }
+  const cssContent = loadStyles(extensionUri);
 
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
@@ -114,6 +105,7 @@ export function getSidebarHtml(
           const msg = event.data;
           if (msg.type === 'syncData') {
             state.data = msg.data;
+            pruneStaleSelection();
             renderExplorer();
           } else if (msg.type === 'pageSelected') {
             state.activeNotebookId = msg.notebookId;
@@ -164,7 +156,27 @@ export function getSidebarHtml(
         });
       }
 
+      // Keeps selection state honest when the selected notebook/page disappears
+      // (deleted here, from the editor tab, by an agent, or from another IDE).
+      function pruneStaleSelection() {
+        const notebooks = state.data.notebooks || [];
+
+        if (state.activeNotebookId && !notebooks.some((n) => n.id === state.activeNotebookId)) {
+          state.activeNotebookId = null;
+          state.activePageId = null;
+          return;
+        }
+
+        if (state.activePageId) {
+          const nb = notebooks.find((n) => n.id === state.activeNotebookId);
+          if (!nb || !(nb.pages || []).some((p) => p.id === state.activePageId)) {
+            state.activePageId = null;
+          }
+        }
+      }
+
       function renderExplorer() {
+        const previousScrollTop = elements.explorerContent.scrollTop;
         elements.explorerContent.innerHTML = '';
         const notebooks = state.data.notebooks || [];
 
@@ -186,7 +198,7 @@ export function getSidebarHtml(
 
           if (query) {
             pages = pages.filter(
-              (p) => p.title.toLowerCase().includes(query) || (p.content && p.content.toLowerCase().includes(query))
+              (p) => p.title.toLowerCase().includes(query) || contentText(p.content).toLowerCase().includes(query)
             );
             if (pages.length === 0 && !nb.title.toLowerCase().includes(query)) {
               return;
@@ -312,6 +324,10 @@ export function getSidebarHtml(
           // Delete notebook
           headerEl.querySelector('.btn-del-nb').addEventListener('click', (e) => {
             e.stopPropagation();
+            if (state.activeNotebookId === nb.id) {
+              state.activeNotebookId = null;
+              state.activePageId = null;
+            }
             vscode.postMessage({ type: 'deleteNotebook', id: nb.id });
           });
 
@@ -366,7 +382,16 @@ export function getSidebarHtml(
               });
 
               pageEl.addEventListener('dragover', (e) => {
-                if (state.draggedType !== 'page' || state.draggedPageId === page.id) return;
+                // Pages can only be reordered inside their own notebook; without
+                // this check a cross-notebook drag shows a valid drop indicator
+                // and then silently does nothing.
+                if (
+                  state.draggedType !== 'page' ||
+                  state.draggedNotebookId !== nb.id ||
+                  state.draggedPageId === page.id
+                ) {
+                  return;
+                }
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
                 const rect = pageEl.getBoundingClientRect();
@@ -422,6 +447,9 @@ export function getSidebarHtml(
               // Delete page
               pageEl.querySelector('.btn-del-page').addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (state.activePageId === page.id) {
+                  state.activePageId = null;
+                }
                 vscode.postMessage({
                   type: 'deletePage',
                   notebookId: nb.id,
@@ -436,6 +464,8 @@ export function getSidebarHtml(
           groupEl.appendChild(pagesListEl);
           elements.explorerContent.appendChild(groupEl);
         });
+
+        elements.explorerContent.scrollTop = previousScrollTop;
       }
 
       function showModal(title, placeholder, defaultValue, onConfirm) {
@@ -467,6 +497,26 @@ export function getSidebarHtml(
       function escapeHtml(s) {
         if (!s) return '';
         return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      // Page content is stored as HTML; search against readable text only.
+      function contentText(content) {
+        if (!content) return '';
+        if (!/<(p|div|h[1-6]|ul|ol|li|blockquote|pre|code|br|hr|strong|em|a|span|table|tr|td|th|img|mark|sup|sub)\\b/i.test(content)) {
+          return content;
+        }
+        return content
+          .replace(/<(span|div)([^>]*data-type="(?:inline|block)-math"[^>]*)>\\s*<\\/\\1>/gi, (match, tag, attrs) => {
+            const latex = /data-latex="([^"]*)"/i.exec(attrs);
+            return latex ? ' ' + latex[1] + ' ' : match;
+          })
+          .replace(/<\\s*br\\s*\\/?>/gi, '\\n')
+          .replace(/<\\/\\s*(p|div|h[1-6]|blockquote|pre|li|tr)\\s*>/gi, '\\n')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/\\s+/g, ' ')
+          .trim();
       }
 
       function formatTime(ts) {

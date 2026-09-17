@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { NotebookService } from '../services/NotebookService';
 import { ExportImportService } from '../services/ExportImportService';
+import { contentToPlainText } from '../utils/noteContent';
 
 export interface IToolContext {
   notebookService: NotebookService;
@@ -72,7 +73,7 @@ export class NotepadReadPageTool implements vscode.LanguageModelTool<IReadPageIn
       notebookTitle: notebook.title,
       pageId: page.id,
       title: page.title,
-      content: page.content,
+      content: contentToPlainText(page.content),
       wordCount: page.getWordCount(),
       characterCount: page.getCharacterCount(),
       updatedAt: new Date(page.updatedAt).toISOString(),

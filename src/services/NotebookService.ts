@@ -2,6 +2,7 @@ import { Notebook } from '../models/Notebook';
 import { Page } from '../models/Page';
 import { INotebookDTO, ISearchResult, IStorageData } from '../models/types';
 import { INotebookRepository } from '../repositories/INotebookRepository';
+import { contentToPlainText } from '../utils/noteContent';
 
 /**
  * Service orchestrating notebook and page business logic.
@@ -76,8 +77,7 @@ export class NotebookService {
     notebookId: string,
     pageId: string,
     title: string,
-    content: string,
-    isPinned?: boolean
+    content: string
   ): Promise<Page> {
     const notebook = await this._repository.getNotebookById(notebookId);
     if (!notebook) {
@@ -91,28 +91,9 @@ export class NotebookService {
 
     page.updateTitle(title);
     page.updateContent(content);
-    if (isPinned !== undefined) {
-      page.setPinned(isPinned);
-    }
 
     await this._repository.saveNotebook(notebook);
     return page;
-  }
-
-  public async togglePinPage(notebookId: string, pageId: string): Promise<boolean> {
-    const notebook = await this._repository.getNotebookById(notebookId);
-    if (!notebook) {
-      throw new Error(`Notebook not found: ${notebookId}`);
-    }
-
-    const page = notebook.findPage(pageId);
-    if (!page) {
-      throw new Error(`Page not found: ${pageId}`);
-    }
-
-    const pinned = page.togglePin();
-    await this._repository.saveNotebook(notebook);
-    return pinned;
   }
 
   public async reorderNotebooks(orderedNotebookIds: string[]): Promise<void> {
@@ -141,18 +122,19 @@ export class NotebookService {
 
     for (const notebook of notebooks) {
       for (const page of notebook.getPages()) {
+        const plainContent = contentToPlainText(page.content);
         const titleMatch = page.title.toLowerCase().includes(normalizedQuery);
-        const contentMatch = page.content.toLowerCase().includes(normalizedQuery);
+        const contentMatch = plainContent.toLowerCase().includes(normalizedQuery);
 
         if (titleMatch || contentMatch) {
           let snippet = '';
           if (contentMatch) {
-            const idx = page.content.toLowerCase().indexOf(normalizedQuery);
+            const idx = plainContent.toLowerCase().indexOf(normalizedQuery);
             const start = Math.max(0, idx - 40);
-            const end = Math.min(page.content.length, idx + normalizedQuery.length + 40);
-            snippet = (start > 0 ? '...' : '') + page.content.substring(start, end).replace(/\n/g, ' ') + (end < page.content.length ? '...' : '');
+            const end = Math.min(plainContent.length, idx + normalizedQuery.length + 40);
+            snippet = (start > 0 ? '...' : '') + plainContent.substring(start, end).replace(/\n/g, ' ') + (end < plainContent.length ? '...' : '');
           } else {
-            snippet = page.content.substring(0, 80).replace(/\n/g, ' ') || 'No content';
+            snippet = plainContent.substring(0, 80).replace(/\n/g, ' ') || 'No content';
           }
 
           results.push({

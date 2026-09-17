@@ -17,45 +17,94 @@ const DATA_FILE = path.join(STORAGE_DIR, 'notepad-code-data.json');
 // Storage Operations
 // ----------------------------------------------------------------------------
 function loadStorageData() {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      const content = fs.readFileSync(DATA_FILE, 'utf8');
-      return JSON.parse(content);
-    }
-  } catch (err) {
-    console.error('Failed to read data file:', err);
+  if (!fs.existsSync(DATA_FILE)) {
+    return { version: 1, notebooks: [] };
   }
 
-  return {
-    version: 1,
-    notebooks: [
-      {
-        id: 'nb-default',
-        title: 'Notepad Code',
-        description: 'General Notes',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        pages: [
-          {
-            id: 'page-default',
-            notebookId: 'nb-default',
-            title: 'Getting Started',
-            content: 'Notepad Code integrates seamlessly across VS Code, Cursor, and Google Antigravity.',
-            isPinned: false,
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-          }
-        ]
-      }
-    ]
-  };
+  try {
+    const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    if (!parsed || !Array.isArray(parsed.notebooks)) {
+      throw new Error('Unexpected data shape: "notebooks" array missing');
+    }
+    return parsed;
+  } catch (err) {
+    // Never fabricate data over an unreadable file: set it aside so the notes
+    // can still be recovered manually, and carry on with an empty store.
+    const backupPath = `${DATA_FILE}.corrupt-${Date.now()}.bak`;
+    try {
+      fs.renameSync(DATA_FILE, backupPath);
+      console.error(`Notepad Code: notes file could not be read (${err.message}). It was set aside as ${backupPath}.`);
+    } catch (renameErr) {
+      console.error('Notepad Code: notes file could not be read and could not be set aside:', renameErr);
+    }
+    return { version: 1, notebooks: [] };
+  }
 }
 
 function saveStorageData(data) {
   if (!fs.existsSync(STORAGE_DIR)) {
     fs.mkdirSync(STORAGE_DIR, { recursive: true });
   }
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+
+  // Atomic replace: a crash mid-write can never leave a half-written file.
+  const tmpPath = `${DATA_FILE}.${process.pid}.tmp`;
+  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
+  fs.renameSync(tmpPath, DATA_FILE);
+}
+
+/**
+ * Page content is stored as HTML by the rich text editor, but AI agents should
+ * always read readable plain text.
+ */
+function htmlToPlainText(content) {
+  if (!content) return '';
+  if (!/<(p|div|h[1-6]|ul|ol|li|blockquote|pre|code|br|hr|strong|em|a|span|table|tr|td|th|img)\b/i.test(content)) {
+    return content;
+  }
+
+  let text = content
+    // Math nodes keep their LaTeX source so formulas are not lost
+    .replace(/<(span|div)([^>]*data-type="(?:inline|block)-math"[^>]*)>\s*<\/\1>/gi, (match, tag, attrs) => {
+      const latex = /data-latex="([^"]*)"/i.exec(attrs);
+      if (!latex) return match;
+      const value = decodeEntities(latex[1]);
+      return tag.toLowerCase() === 'div' ? `\n${value}\n` : ` ${value} `;
+    })
+    // Images become a readable placeholder
+    .replace(/<img\b[^>]*>/gi, (tag) => {
+      const alt = /alt="([^"]*)"/i.exec(tag);
+      return alt && alt[1] ? `[Image: ${decodeEntities(alt[1])}]` : '[Image]';
+    })
+    // Tables: cells separated by pipes, rows by newlines
+    .replace(/<\/\s*(td|th)\s*>/gi, ' | ')
+    .replace(/<\/\s*tr\s*>/gi, '\n')
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<hr\s*\/?>/gi, '\n---\n')
+    .replace(/<\/\s*(p|div|h[1-6]|blockquote|pre|table|tr)\s*>/gi, '\n')
+    .replace(/<li\b[^>]*>/gi, (tag) => {
+      if (/data-type="taskItem"/i.test(tag)) {
+        return /data-checked="true"/i.test(tag) ? '☑ ' : '☐ ';
+      }
+      return '• ';
+    })
+    .replace(/<\/\s*li\s*>/gi, '\n')
+    .replace(/<[^>]+>/g, '');
+
+  return decodeEntities(text)
+    .replace(/[ \t]*\|[ \t]*\n/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function decodeEntities(text) {
+  return text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&amp;/g, '&');
 }
 
 // ----------------------------------------------------------------------------
@@ -289,15 +338,15 @@ function executeTool(name, args) {
       const page = (nb.pages || []).find((p) => p.id === args.pageId);
       if (!page) return `Error: Page "${args.pageId}" not found in notebook "${nb.title}".`;
 
-      const words = page.content.trim() ? page.content.trim().split(/\s+/).length : 0;
+      const words = htmlToPlainText(page.content).trim() ? htmlToPlainText(page.content).trim().split(/\s+/).length : 0;
       return JSON.stringify({
         notebookId: nb.id,
         notebookTitle: nb.title,
         pageId: page.id,
         title: page.title,
-        content: page.content,
+        content: htmlToPlainText(page.content),
         wordCount: words,
-        characterCount: page.content.length,
+        characterCount: htmlToPlainText(page.content).length,
         updatedAt: new Date(page.updatedAt).toISOString()
       }, null, 2);
     }
@@ -308,17 +357,18 @@ function executeTool(name, args) {
       const results = [];
       for (const nb of data.notebooks) {
         for (const page of nb.pages || []) {
+          const plain = htmlToPlainText(page.content);
           const titleMatch = page.title.toLowerCase().includes(q);
-          const contentMatch = page.content.toLowerCase().includes(q);
+          const contentMatch = plain.toLowerCase().includes(q);
           if (titleMatch || contentMatch) {
             let snippet = '';
             if (contentMatch) {
-              const idx = page.content.toLowerCase().indexOf(q);
+              const idx = plain.toLowerCase().indexOf(q);
               const start = Math.max(0, idx - 40);
-              const end = Math.min(page.content.length, idx + q.length + 40);
-              snippet = (start > 0 ? '...' : '') + page.content.substring(start, end).replace(/\n/g, ' ') + (end < page.content.length ? '...' : '');
+              const end = Math.min(plain.length, idx + q.length + 40);
+              snippet = (start > 0 ? '...' : '') + plain.substring(start, end).replace(/\n/g, ' ') + (end < plain.length ? '...' : '');
             } else {
-              snippet = page.content.substring(0, 80).replace(/\n/g, ' ') || 'No content';
+              snippet = plain.substring(0, 80).replace(/\n/g, ' ') || 'No content';
             }
             results.push({
               notebookId: nb.id,
@@ -338,7 +388,7 @@ function executeTool(name, args) {
       const newId = `nb-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
       const newNb = {
         id: newId,
-        title: args.title.trim(),
+        title: (args.title || '').trim() || 'Untitled Notebook',
         description: (args.description || '').trim(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -346,9 +396,8 @@ function executeTool(name, args) {
           {
             id: `p-${Date.now()}`,
             notebookId: newId,
-            title: 'Genel',
+            title: 'General',
             content: '',
-            isPinned: false,
             createdAt: Date.now(),
             updatedAt: Date.now()
           }
@@ -363,14 +412,13 @@ function executeTool(name, args) {
       const nb = data.notebooks.find((n) => n.id === args.notebookId);
       if (!nb) return `Error: Notebook "${args.notebookId}" not found.`;
       const pageId = `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
-      const title = (args.title || '').trim();
+      const title = (args.title || '').trim() || 'Untitled Page';
       const content = normalizeToPlainText(args.content || '', title);
       const newPage = {
         id: pageId,
         notebookId: nb.id,
         title: title,
         content: content,
-        isPinned: false,
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
@@ -387,7 +435,12 @@ function executeTool(name, args) {
       const page = (nb.pages || []).find((p) => p.id === args.pageId);
       if (!page) return `Error: Page "${args.pageId}" not found.`;
 
-      if (args.title !== undefined) page.title = args.title.trim();
+      // An empty title must never overwrite the existing one (the extension
+      // model rejects empty titles, so the two paths stay consistent).
+      if (args.title !== undefined) {
+        const newTitle = (args.title || '').trim();
+        if (newTitle) page.title = newTitle;
+      }
       if (args.content !== undefined) page.content = normalizeToPlainText(args.content, page.title);
       page.updatedAt = Date.now();
       nb.updatedAt = Date.now();
@@ -399,7 +452,7 @@ function executeTool(name, args) {
       const nb = data.notebooks.find((n) => n.id === args.notebookId);
       if (!nb) return `Error: Notebook "${args.notebookId}" not found.`;
       const oldTitle = nb.title;
-      nb.title = args.title.trim();
+      nb.title = (args.title || '').trim() || oldTitle;
       nb.updatedAt = Date.now();
       saveStorageData(data);
       return `Renamed notebook "${oldTitle}" to "${nb.title}".`;

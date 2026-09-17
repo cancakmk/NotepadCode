@@ -65,14 +65,32 @@ Notepad Code protects your data with a dual-layer confirmation model:
 - **VS Code Copilot:** Prompts native confirmation dialogs displaying target note details before executing destructive actions.
 - **MCP Protocol:** Requires explicit confirmation parameters (`confirm: true`) for deletions and imports, preventing rogue AI actions.
 
+### ✍️ Notion-Style Rich Text Editor
+Every page opens in a full **Tiptap** editor built for fast, structured note-taking:
+
+| Capability | How to use it |
+| :--- | :--- |
+| **Slash commands** | Type `/` for text, headings 1–4, bullet/numbered/to-do/toggle lists, tables, quotes, code blocks, dividers, images, emoji, links and math |
+| **Floating toolbar** | Select text to bold, italicise, underline, strike, add inline code, highlight, super/subscript, link, align or convert the block |
+| **Table quick-add** | `+` handles on the table edges append a row or column in one click, and columns resize by dragging their border |
+| **Tables** | Insert any size, then reshape them with the table toolbar: add/remove rows and columns, merge and split cells, toggle header row/column/cell, align cell content, paint cell backgrounds, stripe and compact rows, fit-to-content width, and distribute column widths evenly |
+| **Toggle lists** | Collapsible Notion-style sections whose open state is remembered |
+| **Code blocks** | Syntax highlighting for 37 languages with a built-in language switcher |
+| **Math** | KaTeX-rendered inline and display formulas (`E = mc^2`, `\int_0^\infty …`) |
+| **Images** | Paste a URL or pick a local file; images are embedded so notes stay portable |
+| **Markdown shortcuts** | `#` headings, `-` bullets, `1.` numbers, `[]` to-dos, `>` quotes, `` ``` `` code |
+| **Smart typography** | `--` becomes an em dash, straight quotes become curly quotes |
+| **Focus mode** | Dims everything but the block you are editing |
+| **Invisible characters** | Reveals spaces and line breaks when you need them |
+| **Auto-save** | Every change is persisted automatically (debounced) — no save button |
+
 ### 🎨 Distraction-Free Monochrome Aesthetic
 Designed around pure black (`#000000`) and pure white (`#FFFFFF`) palette tokens that adapt dynamically to your VS Code theme (Dark, Light, High Contrast). Crisp borders, bespoke SVG icons, word/character live counters, and zero visual noise.
 
 ### 🧭 Quick Action Controls
 - **Sidebar Header Buttons:** `New Notebook`, `Export JSON`, `Import JSON` right from the view title.
-- **Pinning:** Keep critical cheat-sheets and TODOs pinned to the top.
 - **Instant Search:** Fuzzy search across all notebooks and pages simultaneously.
-- **Full Tab Editor:** Distraction-free editing tab with real-time auto-saving.
+- **Full Tab Editor:** Distraction-free rich text editing tab with real-time auto-saving.
 
 ---
 
@@ -118,6 +136,8 @@ Ask your favorite AI agent in plain language:
 ## 🛠️ MCP Tools Reference
 
 Notepad Code exposes **11 standardized tools** via both Model Context Protocol (stdio JSON-RPC) and VS Code Language Model API:
+
+Reads always return clean plain text — HTML markup produced by the rich text editor is stripped automatically. Writes accept plain text and are normalized (markdown syntax is removed).
 
 | Tool Name | Parameters | Description | Safety Level |
 | :--- | :--- | :--- | :---: |
@@ -165,8 +185,7 @@ All data remains **100% offline, local, and private**. Nothing is ever sent to e
           "id": "page-1725900001000",
           "notebookId": "nb-1725900000000",
           "title": "Auth Flow",
-          "content": "Using asymmetric RS256 JWT tokens with 15min expiry.",
-          "isPinned": true,
+          "content": "<h2>Tokens</h2><p>Using <strong>RS256</strong> JWT tokens with 15min expiry.</p>",
           "createdAt": 1725900001000,
           "updatedAt": 1725900001000
         }
@@ -175,6 +194,10 @@ All data remains **100% offline, local, and private**. Nothing is ever sent to e
   ]
 }
 ```
+
+> `content` is HTML while a page is edited in the rich text editor. Notes created
+> through the MCP tools or older versions are stored as plain text and are
+> converted automatically the first time they are opened.
 
 ---
 

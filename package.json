@@ -142,7 +142,10 @@
               "description": "ID of the page to read."
             }
           },
-          "required": ["notebookId", "pageId"]
+          "required": [
+            "notebookId",
+            "pageId"
+          ]
         }
       },
       {
@@ -157,7 +160,9 @@
               "description": "Search keyword or text query."
             }
           },
-          "required": ["query"]
+          "required": [
+            "query"
+          ]
         }
       },
       {
@@ -176,7 +181,9 @@
               "description": "Optional description for the notebook."
             }
           },
-          "required": ["title"]
+          "required": [
+            "title"
+          ]
         }
       },
       {
@@ -199,7 +206,10 @@
               "description": "Content of the note in NORMAL PLAIN TEXT format (do not use markdown formatting like #, **, ```)."
             }
           },
-          "required": ["notebookId", "title"]
+          "required": [
+            "notebookId",
+            "title"
+          ]
         }
       },
       {
@@ -226,7 +236,10 @@
               "description": "New content for the note in NORMAL PLAIN TEXT format (optional, no markdown)."
             }
           },
-          "required": ["notebookId", "pageId"]
+          "required": [
+            "notebookId",
+            "pageId"
+          ]
         }
       },
       {
@@ -245,7 +258,10 @@
               "description": "New title for the notebook."
             }
           },
-          "required": ["notebookId", "title"]
+          "required": [
+            "notebookId",
+            "title"
+          ]
         }
       },
       {
@@ -264,7 +280,10 @@
               "description": "ID of the page to delete."
             }
           },
-          "required": ["notebookId", "pageId"]
+          "required": [
+            "notebookId",
+            "pageId"
+          ]
         }
       },
       {
@@ -279,7 +298,9 @@
               "description": "ID of the notebook to delete."
             }
           },
-          "required": ["notebookId"]
+          "required": [
+            "notebookId"
+          ]
         }
       },
       {
@@ -303,7 +324,9 @@
               "description": "The JSON backup string to import."
             }
           },
-          "required": ["jsonData"]
+          "required": [
+            "jsonData"
+          ]
         }
       }
     ]
@@ -321,5 +344,30 @@
     "@types/vscode": "^1.85.0",
     "esbuild": "^0.20.0",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@tiptap/core": "^3.31.3",
+    "@tiptap/extension-character-count": "^3.31.3",
+    "@tiptap/extension-code-block-lowlight": "^3.31.3",
+    "@tiptap/extension-color": "^3.31.3",
+    "@tiptap/extension-details": "^3.31.3",
+    "@tiptap/extension-focus": "^3.31.3",
+    "@tiptap/extension-font-family": "^3.31.3",
+    "@tiptap/extension-highlight": "^3.31.3",
+    "@tiptap/extension-image": "^3.31.3",
+    "@tiptap/extension-invisible-characters": "^3.31.3",
+    "@tiptap/extension-list": "^3.31.3",
+    "@tiptap/extension-mathematics": "^3.31.3",
+    "@tiptap/extension-subscript": "^3.31.3",
+    "@tiptap/extension-superscript": "^3.31.3",
+    "@tiptap/extension-table": "^3.31.3",
+    "@tiptap/extension-text-align": "^3.31.3",
+    "@tiptap/extension-text-style": "^3.31.3",
+    "@tiptap/extension-typography": "^3.31.3",
+    "@tiptap/extensions": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
+    "highlight.js": "^11.12.0",
+    "katex": "^0.18.7",
+    "lowlight": "^3.3.0"
   }
 }

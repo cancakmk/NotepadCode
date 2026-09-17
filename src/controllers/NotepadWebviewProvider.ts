@@ -130,15 +130,8 @@ export class NotepadWebviewProvider implements vscode.WebviewViewProvider {
             message.notebookId,
             message.pageId,
             message.title,
-            message.content,
-            message.isPinned
+            message.content
           );
-          this._syncEditorPanel();
-          break;
-
-        case 'togglePinPage':
-          await this._notebookService.togglePinPage(message.notebookId, message.pageId);
-          await this.syncData();
           this._syncEditorPanel();
           break;
 

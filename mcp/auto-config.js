@@ -18,6 +18,67 @@ try {
   // Ignore
 }
 
+/**
+ * Parses JSON with comments and trailing commas (VS Code and Zed config files
+ * are JSONC, and users frequently annotate them).
+ */
+function parseJsonc(text) {
+  let out = '';
+  let inString = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (inLineComment) {
+      if (ch === '\n') {
+        inLineComment = false;
+        out += ch;
+      }
+      continue;
+    }
+    if (inBlockComment) {
+      if (ch === '*' && next === '/') {
+        inBlockComment = false;
+        i++;
+      }
+      continue;
+    }
+    if (inString) {
+      out += ch;
+      if (ch === '\\') {
+        out += next === undefined ? '' : next;
+        i++;
+        continue;
+      }
+      if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      out += ch;
+      continue;
+    }
+    if (ch === '/' && next === '/') {
+      inLineComment = true;
+      i++;
+      continue;
+    }
+    if (ch === '/' && next === '*') {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+    out += ch;
+  }
+
+  return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
+}
+
 function updateMcpConfigFile(configPath, serverName, serverDef, rootKey = 'mcpServers') {
   try {
     const dir = path.dirname(configPath);
@@ -27,11 +88,16 @@ function updateMcpConfigFile(configPath, serverName, serverDef, rootKey = 'mcpSe
 
     let config = {};
     if (fs.existsSync(configPath)) {
-      try {
-        const content = fs.readFileSync(configPath, 'utf8');
-        config = JSON.parse(content) || {};
-      } catch (err) {
-        config = {};
+      const content = fs.readFileSync(configPath, 'utf8');
+      if (content.trim().length > 0) {
+        try {
+          config = parseJsonc(content) || {};
+        } catch (err) {
+          // Never replace a config we do not understand — that would silently
+          // delete every other MCP server the user has configured.
+          console.error(`Notepad Code: ${configPath} is not valid JSON/JSONC; leaving it untouched.`);
+          return false;
+        }
       }
     }
 
@@ -40,7 +106,11 @@ function updateMcpConfigFile(configPath, serverName, serverDef, rootKey = 'mcpSe
     }
 
     config[rootKey][serverName] = serverDef;
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
+
+    // Atomic replace so an interrupted write cannot corrupt the user's config.
+    const tmpPath = `${configPath}.${process.pid}.tmp`;
+    fs.writeFileSync(tmpPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
+    fs.renameSync(tmpPath, configPath);
     return true;
   } catch (err) {
     console.error(`Error writing ${configPath}:`, err);
@@ -136,7 +206,10 @@ if (fs.existsSync(path.dirname(zedSettingsPath))) {
   try {
     let zedConfig = {};
     if (fs.existsSync(zedSettingsPath)) {
-      zedConfig = JSON.parse(fs.readFileSync(zedSettingsPath, 'utf8')) || {};
+      const raw = fs.readFileSync(zedSettingsPath, 'utf8');
+      if (raw.trim().length > 0) {
+        zedConfig = parseJsonc(raw) || {};
+      }
     }
     if (!zedConfig.context_servers || typeof zedConfig.context_servers !== 'object') {
       zedConfig.context_servers = {};
@@ -144,10 +217,13 @@ if (fs.existsSync(path.dirname(zedSettingsPath))) {
     zedConfig.context_servers['notepad-code'] = {
       command: { path: 'node', args: [serverPath] },
     };
-    fs.writeFileSync(zedSettingsPath, JSON.stringify(zedConfig, null, 2) + '\n', 'utf8');
+    const zedTmpPath = `${zedSettingsPath}.${process.pid}.tmp`;
+    fs.writeFileSync(zedTmpPath, JSON.stringify(zedConfig, null, 2) + '\n', 'utf8');
+    fs.renameSync(zedTmpPath, zedSettingsPath);
     results.push(`Zed (${zedSettingsPath})`);
   } catch (err) {
-    // Non-fatal
+    // Leave the settings file untouched if it cannot be parsed.
+    console.error(`Notepad Code: Zed settings could not be updated (${err.message}).`);
   }
 }
 
